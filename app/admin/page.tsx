@@ -26,7 +26,7 @@ import {
 import { useThemeContext } from "@/context/theme-context"
 import { AdminAuth } from "@/components/admin-auth"
 import { AdminLayout } from "@/components/admin-layout"
-import { useAdminAuth } from "@/lib/auth"
+import { isAdminAuthenticated } from "@/lib/auth"
 import { useSupabaseCMS } from "@/lib/supabase-cms"
 import type { ProjectDetail, BlogPost, ClientReview, TrustedPartner } from "@/lib/supabase"
 import { slugify } from "@/lib/utils"
@@ -104,16 +104,18 @@ const blogTags = [
 const partnershipTypes = ["client", "technology", "strategic"]
 
 export default function AdminPage() {
-  const { isAuthenticated, isLoading } = useAdminAuth()
-  const [showDashboard, setShowDashboard] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (isAuthenticated) {
-      setShowDashboard(true)
-    } else {
-      setShowDashboard(false)
+    const checkAuth = () => {
+      const authenticated = isAdminAuthenticated()
+      setIsAuthenticated(authenticated)
+      setIsLoading(false)
     }
-  }, [isAuthenticated])
+
+    checkAuth()
+  }, [])
 
   if (isLoading) {
     return (
@@ -126,8 +128,8 @@ export default function AdminPage() {
     )
   }
 
-  if (!showDashboard) {
-    return <AdminAuth onAuthenticated={() => setShowDashboard(true)} />
+  if (!isAuthenticated) {
+    return <AdminAuth onAuthenticated={() => setIsAuthenticated(true)} />
   }
 
   return (
@@ -142,7 +144,9 @@ function AdminDashboardComponent() {
   const cms = useSupabaseCMS()
 
   // State management
-  const [activeTab, setActiveTab] = useState<"projects" | "blog" | "reviews" | "partners">("projects")
+  const [activeTab, setActiveTab] = useState<"adminprojects" | "adminblog" | "adminreviews" | "adminpartners">(
+    "adminprojects",
+  )
   const [projects, setProjects] = useState<ProjectDetail[]>([])
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [reviews, setReviews] = useState<ClientReview[]>([])
@@ -203,7 +207,7 @@ function AdminDashboardComponent() {
     content: "",
     image: "",
     tags: [],
-    author: "RapidXTech Team",
+    author: "RapidXSolution Team",
     date: new Date().toISOString().split("T")[0],
     is_published: false,
     seo_title: "",
@@ -415,7 +419,7 @@ function AdminDashboardComponent() {
       content: "",
       image: "",
       tags: [],
-      author: "RapidXTech Team",
+      author: "RapidXSolution Team",
       date: new Date().toISOString().split("T")[0],
       is_published: false,
       seo_title: "",
@@ -641,13 +645,13 @@ function AdminDashboardComponent() {
 
   const getCurrentData = () => {
     switch (activeTab) {
-      case "projects":
+      case "adminprojects":
         return filteredProjects
-      case "blog":
+      case "adminblog":
         return filteredBlogPosts
-      case "reviews":
+      case "adminreviews":
         return filteredReviews
-      case "partners":
+      case "adminpartners":
         return filteredPartners
       default:
         return []
@@ -656,13 +660,13 @@ function AdminDashboardComponent() {
 
   const getCurrentTotal = () => {
     switch (activeTab) {
-      case "projects":
+      case "adminprojects":
         return projects
-      case "blog":
+      case "adminblog":
         return blogPosts
-      case "reviews":
+      case "adminreviews":
         return reviews
-      case "partners":
+      case "adminpartners":
         return partners
       default:
         return []
@@ -707,9 +711,9 @@ function AdminDashboardComponent() {
         >
           <div className="flex space-x-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 overflow-x-auto">
             <button
-              onClick={() => setActiveTab("projects")}
+              onClick={() => setActiveTab("adminprojects")}
               className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap ${
-                activeTab === "projects"
+                activeTab === "adminprojects"
                   ? "bg-primary text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
@@ -719,9 +723,9 @@ function AdminDashboardComponent() {
               <span className="bg-white/20 px-2 py-1 rounded-full text-xs">{projects.length}</span>
             </button>
             <button
-              onClick={() => setActiveTab("blog")}
+              onClick={() => setActiveTab("adminblog")}
               className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap ${
-                activeTab === "blog"
+                activeTab === "adminblog"
                   ? "bg-primary text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
@@ -731,9 +735,9 @@ function AdminDashboardComponent() {
               <span className="bg-white/20 px-2 py-1 rounded-full text-xs">{blogPosts.length}</span>
             </button>
             <button
-              onClick={() => setActiveTab("reviews")}
+              onClick={() => setActiveTab("adminreviews")}
               className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap ${
-                activeTab === "reviews"
+                activeTab === "adminreviews"
                   ? "bg-primary text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
@@ -743,9 +747,9 @@ function AdminDashboardComponent() {
               <span className="bg-white/20 px-2 py-1 rounded-full text-xs">{reviews.length}</span>
             </button>
             <button
-              onClick={() => setActiveTab("partners")}
+              onClick={() => setActiveTab("adminpartners")}
               className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap ${
-                activeTab === "partners"
+                activeTab === "adminpartners"
                   ? "bg-primary text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
@@ -770,7 +774,7 @@ function AdminDashboardComponent() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 theme-text opacity-50" />
                 <Input
-                  placeholder={`Search ${activeTab}...`}
+                  placeholder={`Search ${activeTab.replace("admin", "")}...`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 theme-text bg-transparent border-gray-300 dark:border-gray-600"
@@ -778,7 +782,7 @@ function AdminDashboardComponent() {
               </div>
 
               {/* Category Filter (Projects only) */}
-              {activeTab === "projects" && (
+              {activeTab === "adminprojects" && (
                 <div className="relative dropdown-container">
                   <button
                     onClick={() => {
@@ -874,16 +878,16 @@ function AdminDashboardComponent() {
             <Button
               onClick={() => {
                 switch (activeTab) {
-                  case "projects":
+                  case "adminprojects":
                     setIsProjectFormOpen(true)
                     break
-                  case "blog":
+                  case "adminblog":
                     setIsBlogFormOpen(true)
                     break
-                  case "reviews":
+                  case "adminreviews":
                     setIsReviewFormOpen(true)
                     break
-                  case "partners":
+                  case "adminpartners":
                     setIsPartnerFormOpen(true)
                     break
                 }
@@ -892,11 +896,11 @@ function AdminDashboardComponent() {
             >
               <Plus className="w-4 h-4 mr-2" />
               Add{" "}
-              {activeTab === "projects"
+              {activeTab === "adminprojects"
                 ? "Project"
-                : activeTab === "blog"
+                : activeTab === "adminblog"
                   ? "Blog Post"
-                  : activeTab === "reviews"
+                  : activeTab === "adminreviews"
                     ? "Review"
                     : "Partner"}
             </Button>
@@ -908,11 +912,11 @@ function AdminDashboardComponent() {
               <div className="text-2xl font-bold text-primary">{getCurrentTotal().length}</div>
               <div className="text-sm theme-text opacity-70 theme-transition">
                 Total{" "}
-                {activeTab === "projects"
+                {activeTab === "adminprojects"
                   ? "Projects"
-                  : activeTab === "blog"
+                  : activeTab === "adminblog"
                     ? "Posts"
-                    : activeTab === "reviews"
+                    : activeTab === "adminreviews"
                       ? "Reviews"
                       : "Partners"}
               </div>
@@ -944,7 +948,7 @@ function AdminDashboardComponent() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
         >
           {/* Projects Grid */}
-          {activeTab === "projects" &&
+          {activeTab === "adminprojects" &&
             filteredProjects.map((project, index) => (
               <motion.div
                 key={project.id}
@@ -1025,7 +1029,7 @@ function AdminDashboardComponent() {
             ))}
 
           {/* Blog Posts Grid */}
-          {activeTab === "blog" &&
+          {activeTab === "adminblog" &&
             filteredBlogPosts.map((post, index) => (
               <motion.div
                 key={post.id}
@@ -1102,7 +1106,7 @@ function AdminDashboardComponent() {
             ))}
 
           {/* Reviews Grid */}
-          {activeTab === "reviews" &&
+          {activeTab === "adminreviews" &&
             filteredReviews.map((review, index) => (
               <motion.div
                 key={review.id}
@@ -1195,7 +1199,7 @@ function AdminDashboardComponent() {
             ))}
 
           {/* Partners Grid */}
-          {activeTab === "partners" &&
+          {activeTab === "adminpartners" &&
             filteredPartners.map((partner, index) => (
               <motion.div
                 key={partner.id}
@@ -1297,17 +1301,488 @@ function AdminDashboardComponent() {
         {getCurrentData().length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
             <div className="text-6xl mb-4">
-              {activeTab === "projects" ? "📁" : activeTab === "blog" ? "📝" : activeTab === "reviews" ? "💬" : "🏢"}
+              {activeTab === "adminprojects"
+                ? "📁"
+                : activeTab === "adminblog"
+                  ? "📝"
+                  : activeTab === "adminreviews"
+                    ? "💬"
+                    : "🏢"}
             </div>
-            <h3 className="text-xl font-semibold theme-text mb-2 theme-transition">No {activeTab} found</h3>
+            <h3 className="text-xl font-semibold theme-text mb-2 theme-transition">
+              No {activeTab.replace("admin", "")} found
+            </h3>
             <p className="theme-text opacity-70 theme-transition">
               {searchTerm || filterCategory !== "All" || filterStatus !== "All"
                 ? "Try adjusting your filters"
-                : `Create your first ${activeTab.slice(0, -1)} to get started`}
+                : `Create your first ${activeTab.replace("admin", "").slice(0, -1)} to get started`}
             </p>
           </motion.div>
         )}
       </div>
+
+      {/* Project Form Modal */}
+      <AnimatePresence>
+        {isProjectFormOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => resetProjectForm()}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto theme-transition`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold theme-text theme-transition">
+                  {editingProject ? "Edit Project" : "Add New Project"}
+                </h2>
+                <Button variant="ghost" onClick={resetProjectForm}>
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Title *</label>
+                    <Input
+                      value={projectFormData.title || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="Project title"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Category *</label>
+                    <select
+                      value={projectFormData.category || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, category: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-md border ${
+                        mode === "dark" || color === "black"
+                          ? "border-gray-600 bg-gray-800/50"
+                          : "border-gray-300 bg-white/50"
+                      } theme-text theme-transition`}
+                    >
+                      <option value="">Select category</option>
+                      {categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">
+                    Short Description *
+                  </label>
+                  <Textarea
+                    value={projectFormData.description || ""}
+                    onChange={(e) => setProjectFormData((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="Brief project description"
+                    className="theme-text bg-transparent"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Long Description */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Long Description</label>
+                  <Textarea
+                    value={projectFormData.long_description || ""}
+                    onChange={(e) => setProjectFormData((prev) => ({ ...prev, long_description: e.target.value }))}
+                    placeholder="Detailed project description"
+                    className="theme-text bg-transparent"
+                    rows={4}
+                  />
+                </div>
+
+                {/* Challenge & Solution */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Challenge</label>
+                    <Textarea
+                      value={projectFormData.challenge || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, challenge: e.target.value }))}
+                      placeholder="What challenges did you face?"
+                      className="theme-text bg-transparent"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Solution</label>
+                    <Textarea
+                      value={projectFormData.solution || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, solution: e.target.value }))}
+                      placeholder="How did you solve them?"
+                      className="theme-text bg-transparent"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Technologies */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Technologies</label>
+                  <Input
+                    value={projectFormData.technology?.join(", ") || ""}
+                    onChange={(e) =>
+                      setProjectFormData((prev) => ({
+                        ...prev,
+                        technology: e.target.value
+                          .split(",")
+                          .map((tech) => tech.trim())
+                          .filter(Boolean),
+                      }))
+                    }
+                    placeholder="React, Next.js, Node.js (comma separated)"
+                    className="theme-text bg-transparent"
+                  />
+                </div>
+
+                {/* Project Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Duration</label>
+                    <Input
+                      value={projectFormData.duration || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, duration: e.target.value }))}
+                      placeholder="3 months"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Team Size</label>
+                    <Input
+                      type="number"
+                      value={projectFormData.team_size || 1}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, team_size: Number(e.target.value) }))}
+                      placeholder="3"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Client Type</label>
+                    <Input
+                      value={projectFormData.client_type || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, client_type: e.target.value }))}
+                      placeholder="Startup, Enterprise, etc."
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* URLs */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Live URL</label>
+                    <Input
+                      value={projectFormData.live_url || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, live_url: e.target.value }))}
+                      placeholder="https://example.com"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">GitHub URL</label>
+                    <Input
+                      value={projectFormData.github_url || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, github_url: e.target.value }))}
+                      placeholder="https://github.com/user/repo"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Images */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Project Images</label>
+                  {projectFormData.images?.map((image, index) => (
+                    <div key={image.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                      <Input
+                        value={image.url}
+                        onChange={(e) => {
+                          const newImages = [...(projectFormData.images || [])]
+                          newImages[index] = { ...newImages[index], url: e.target.value }
+                          setProjectFormData((prev) => ({ ...prev, images: newImages }))
+                        }}
+                        placeholder="Image URL"
+                        className="theme-text bg-transparent"
+                      />
+                      <Input
+                        value={image.alt}
+                        onChange={(e) => {
+                          const newImages = [...(projectFormData.images || [])]
+                          newImages[index] = { ...newImages[index], alt: e.target.value }
+                          setProjectFormData((prev) => ({ ...prev, images: newImages }))
+                        }}
+                        placeholder="Alt text"
+                        className="theme-text bg-transparent"
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          value={image.caption}
+                          onChange={(e) => {
+                            const newImages = [...(projectFormData.images || [])]
+                            newImages[index] = { ...newImages[index], caption: e.target.value }
+                            setProjectFormData((prev) => ({ ...prev, images: newImages }))
+                          }}
+                          placeholder="Caption"
+                          className="theme-text bg-transparent flex-1"
+                        />
+                        {(projectFormData.images?.length || 0) > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const newImages = projectFormData.images?.filter((_, i) => i !== index) || []
+                              setProjectFormData((prev) => ({ ...prev, images: newImages }))
+                            }}
+                            className="text-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newId = Math.max(...(projectFormData.images?.map((img) => img.id) || [0])) + 1
+                      const newImages = [
+                        ...(projectFormData.images || []),
+                        { id: newId, url: "", alt: "", caption: "" },
+                      ]
+                      setProjectFormData((prev) => ({ ...prev, images: newImages }))
+                    }}
+                    className="bg-transparent"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Image
+                  </Button>
+                </div>
+
+                {/* Publish Status */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isPublished"
+                    checked={projectFormData.is_published || false}
+                    onChange={(e) => setProjectFormData((prev) => ({ ...prev, is_published: e.target.checked }))}
+                    className="rounded"
+                  />
+                  <label htmlFor="isPublished" className="text-sm font-medium theme-text theme-transition">
+                    Publish immediately
+                  </label>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-4 mt-8 pt-6 border-t border-gray-300 dark:border-gray-600">
+                <Button onClick={handleSaveProject} className="bg-primary hover:bg-primary/90 text-white flex-1">
+                  <Save className="w-4 h-4 mr-2" />
+                  {editingProject ? "Update Project" : "Create Project"}
+                </Button>
+                <Button variant="outline" onClick={resetProjectForm} className="flex-1 bg-transparent">
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Blog Form Modal */}
+      <AnimatePresence>
+        {isBlogFormOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => resetBlogForm()}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto theme-transition`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold theme-text theme-transition">
+                  {editingBlogPost ? "Edit Blog Post" : "Add New Blog Post"}
+                </h2>
+                <Button variant="ghost" onClick={resetBlogForm}>
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Title *</label>
+                    <Input
+                      value={blogFormData.title || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="Blog post title"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Slug</label>
+                    <Input
+                      value={blogFormData.slug || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, slug: e.target.value }))}
+                      placeholder="blog-post-slug (auto-generated if empty)"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Excerpt */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Excerpt *</label>
+                  <Textarea
+                    value={blogFormData.excerpt || ""}
+                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
+                    placeholder="Brief description of the blog post"
+                    className="theme-text bg-transparent"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Content */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Content *</label>
+                  <Textarea
+                    value={blogFormData.content || ""}
+                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, content: e.target.value }))}
+                    placeholder="Full blog post content (HTML supported)"
+                    className="theme-text bg-transparent"
+                    rows={10}
+                  />
+                </div>
+
+                {/* Image and Author */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Featured Image</label>
+                    <Input
+                      value={blogFormData.image || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, image: e.target.value }))}
+                      placeholder="https://images.unsplash.com/..."
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Author</label>
+                    <Input
+                      value={blogFormData.author || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, author: e.target.value }))}
+                      placeholder="Author name"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Tags and Date */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Tags</label>
+                    <Input
+                      value={blogFormData.tags?.join(", ") || ""}
+                      onChange={(e) =>
+                        setBlogFormData((prev) => ({
+                          ...prev,
+                          tags: e.target.value
+                            .split(",")
+                            .map((tag) => tag.trim())
+                            .filter(Boolean),
+                        }))
+                      }
+                      placeholder="web development, react, javascript (comma separated)"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Date</label>
+                    <Input
+                      type="date"
+                      value={blogFormData.date || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, date: e.target.value }))}
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* SEO */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">SEO Title</label>
+                    <Input
+                      value={blogFormData.seo_title || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, seo_title: e.target.value }))}
+                      placeholder="SEO optimized title"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">
+                      SEO Description
+                    </label>
+                    <Input
+                      value={blogFormData.seo_description || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, seo_description: e.target.value }))}
+                      placeholder="SEO meta description"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Publish Status */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isBlogPublished"
+                    checked={blogFormData.is_published || false}
+                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, is_published: e.target.checked }))}
+                    className="rounded"
+                  />
+                  <label htmlFor="isBlogPublished" className="text-sm font-medium theme-text theme-transition">
+                    Publish immediately
+                  </label>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-4 mt-8 pt-6 border-t border-gray-300 dark:border-gray-600">
+                <Button onClick={handleSaveBlogPost} className="bg-primary hover:bg-primary/90 text-white flex-1">
+                  <Save className="w-4 h-4 mr-2" />
+                  {editingBlogPost ? "Update Blog Post" : "Create Blog Post"}
+                </Button>
+                <Button variant="outline" onClick={resetBlogForm} className="flex-1 bg-transparent">
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Review Form Modal */}
       <AnimatePresence>

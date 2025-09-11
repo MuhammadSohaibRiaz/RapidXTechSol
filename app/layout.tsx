@@ -10,42 +10,51 @@ import { Suspense } from "next/navigation"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "RapidXTech Solutions - Premium Web & Mobile Development",
+  title: {
+    default: "RapidXSolution - Innovative Web & Mobile Development",
+    template: "%s | RapidXSolution",
+  },
   description:
-    "Transform your business with cutting-edge web and mobile applications. Expert development, stunning design, and scalable solutions.",
-  keywords: "web development, mobile apps, React, Next.js, UI/UX design, software development",
-  authors: [{ name: "RapidXTech Solutions" }],
-  creator: "RapidXTech Solutions",
-  publisher: "RapidXTech Solutions",
+    "Transform your ideas into exceptional digital experiences with RapidXSolution. Expert web development, mobile apps, and digital solutions for startups and enterprises.",
+  keywords: [
+    "web development",
+    "mobile app development",
+    "digital solutions",
+    "startup development",
+    "enterprise software",
+  ],
+  authors: [{ name: "RapidXSolution Team" }],
+  creator: "RapidXSolution",
+  publisher: "RapidXSolution",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://rapidxtech.com"),
+  metadataBase: new URL("https://rapidxsolution.vercel.app"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "RapidXTech Solutions - Premium Web & Mobile Development",
-    description: "Transform your business with cutting-edge web and mobile applications.",
-    url: "https://rapidxtech.com",
-    siteName: "RapidXTech Solutions",
+    type: "website",
+    locale: "en_US",
+    url: "https://rapidxsolution.vercel.app",
+    siteName: "RapidXSolution",
+    title: "RapidXSolution - Innovative Web & Mobile Development",
+    description: "Transform your ideas into exceptional digital experiences with expert development services.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "RapidXTech Solutions",
+        alt: "RapidXSolution - Web & Mobile Development",
       },
     ],
-    locale: "en_US",
-    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "RapidXTech Solutions - Premium Web & Mobile Development",
-    description: "Transform your business with cutting-edge web and mobile applications.",
+    title: "RapidXSolution - Innovative Web & Mobile Development",
+    description: "Transform your ideas into exceptional digital experiences with expert development services.",
     images: ["/og-image.jpg"],
   },
   robots: {
@@ -73,14 +82,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <Suspense fallback={null}>
+        <ThemeContextProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <ThemeContextProvider>
+            <Suspense fallback={null}>
               {children}
               <Analytics />
-            </ThemeContextProvider>
+            </Suspense>
           </ThemeProvider>
-        </Suspense>
+        </ThemeContextProvider>
       </body>
     </html>
   )
