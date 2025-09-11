@@ -1,4 +1,4 @@
-import { supabase, type ProjectDetail, type BlogPost } from "./supabase"
+import { supabase, type ProjectDetail, type BlogPost, type ClientReview, type TrustedPartner } from "./supabase"
 import { slugify } from "./utils"
 
 // Portfolio Projects CMS
@@ -296,6 +296,296 @@ export class BlogCMS {
   }
 }
 
+// Client Reviews CMS
+export class ReviewsCMS {
+  // Get all reviews (admin)
+  static async getAllReviews(): Promise<ClientReview[]> {
+    try {
+      const { data, error } = await supabase
+        .from("client_reviews")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error("Error fetching all reviews:", error)
+      throw new Error("Failed to fetch reviews")
+    }
+  }
+
+  // Get published reviews (public)
+  static async getPublishedReviews(): Promise<ClientReview[]> {
+    try {
+      const { data, error } = await supabase
+        .from("client_reviews")
+        .select("*")
+        .eq("is_published", true)
+        .order("rating", { ascending: false })
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error("Error fetching published reviews:", error)
+      throw new Error("Failed to fetch published reviews")
+    }
+  }
+
+  // Get featured reviews (public)
+  static async getFeaturedReviews(): Promise<ClientReview[]> {
+    try {
+      const { data, error } = await supabase
+        .from("client_reviews")
+        .select("*")
+        .eq("is_published", true)
+        .eq("is_featured", true)
+        .order("rating", { ascending: false })
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error("Error fetching featured reviews:", error)
+      throw new Error("Failed to fetch featured reviews")
+    }
+  }
+
+  // Add new review
+  static async addReview(review: Omit<ClientReview, "id" | "created_at" | "updated_at">): Promise<ClientReview> {
+    try {
+      const { data, error } = await supabase.from("client_reviews").insert([review]).select().single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error adding review:", error)
+      throw new Error("Failed to add review")
+    }
+  }
+
+  // Update review
+  static async updateReview(id: number, updates: Partial<ClientReview>): Promise<ClientReview> {
+    try {
+      const { data, error } = await supabase.from("client_reviews").update(updates).eq("id", id).select().single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error updating review:", error)
+      throw new Error("Failed to update review")
+    }
+  }
+
+  // Delete review
+  static async deleteReview(id: number): Promise<void> {
+    try {
+      const { error } = await supabase.from("client_reviews").delete().eq("id", id)
+
+      if (error) throw error
+    } catch (error) {
+      console.error("Error deleting review:", error)
+      throw new Error("Failed to delete review")
+    }
+  }
+
+  // Toggle publish status
+  static async toggleReviewPublishStatus(id: number): Promise<ClientReview> {
+    try {
+      const { data: currentData, error: fetchError } = await supabase
+        .from("client_reviews")
+        .select("is_published")
+        .eq("id", id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const { data, error } = await supabase
+        .from("client_reviews")
+        .update({ is_published: !currentData.is_published })
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error toggling review publish status:", error)
+      throw new Error("Failed to toggle review publish status")
+    }
+  }
+
+  // Toggle featured status
+  static async toggleReviewFeaturedStatus(id: number): Promise<ClientReview> {
+    try {
+      const { data: currentData, error: fetchError } = await supabase
+        .from("client_reviews")
+        .select("is_featured")
+        .eq("id", id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const { data, error } = await supabase
+        .from("client_reviews")
+        .update({ is_featured: !currentData.is_featured })
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error toggling review featured status:", error)
+      throw new Error("Failed to toggle review featured status")
+    }
+  }
+}
+
+// Trusted Partners CMS
+export class PartnersCMS {
+  // Get all partners (admin)
+  static async getAllPartners(): Promise<TrustedPartner[]> {
+    try {
+      const { data, error } = await supabase
+        .from("trusted_partners")
+        .select("*")
+        .order("display_order", { ascending: true })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error("Error fetching all partners:", error)
+      throw new Error("Failed to fetch partners")
+    }
+  }
+
+  // Get published partners (public)
+  static async getPublishedPartners(): Promise<TrustedPartner[]> {
+    try {
+      const { data, error } = await supabase
+        .from("trusted_partners")
+        .select("*")
+        .eq("is_published", true)
+        .order("display_order", { ascending: true })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error("Error fetching published partners:", error)
+      throw new Error("Failed to fetch published partners")
+    }
+  }
+
+  // Get featured partners (public)
+  static async getFeaturedPartners(): Promise<TrustedPartner[]> {
+    try {
+      const { data, error } = await supabase
+        .from("trusted_partners")
+        .select("*")
+        .eq("is_published", true)
+        .eq("is_featured", true)
+        .order("display_order", { ascending: true })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error("Error fetching featured partners:", error)
+      throw new Error("Failed to fetch featured partners")
+    }
+  }
+
+  // Add new partner
+  static async addPartner(partner: Omit<TrustedPartner, "id" | "created_at" | "updated_at">): Promise<TrustedPartner> {
+    try {
+      const { data, error } = await supabase.from("trusted_partners").insert([partner]).select().single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error adding partner:", error)
+      throw new Error("Failed to add partner")
+    }
+  }
+
+  // Update partner
+  static async updatePartner(id: number, updates: Partial<TrustedPartner>): Promise<TrustedPartner> {
+    try {
+      const { data, error } = await supabase.from("trusted_partners").update(updates).eq("id", id).select().single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error updating partner:", error)
+      throw new Error("Failed to update partner")
+    }
+  }
+
+  // Delete partner
+  static async deletePartner(id: number): Promise<void> {
+    try {
+      const { error } = await supabase.from("trusted_partners").delete().eq("id", id)
+
+      if (error) throw error
+    } catch (error) {
+      console.error("Error deleting partner:", error)
+      throw new Error("Failed to delete partner")
+    }
+  }
+
+  // Toggle publish status
+  static async togglePartnerPublishStatus(id: number): Promise<TrustedPartner> {
+    try {
+      const { data: currentData, error: fetchError } = await supabase
+        .from("trusted_partners")
+        .select("is_published")
+        .eq("id", id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const { data, error } = await supabase
+        .from("trusted_partners")
+        .update({ is_published: !currentData.is_published })
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error toggling partner publish status:", error)
+      throw new Error("Failed to toggle partner publish status")
+    }
+  }
+
+  // Toggle featured status
+  static async togglePartnerFeaturedStatus(id: number): Promise<TrustedPartner> {
+    try {
+      const { data: currentData, error: fetchError } = await supabase
+        .from("trusted_partners")
+        .select("is_featured")
+        .eq("id", id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const { data, error } = await supabase
+        .from("trusted_partners")
+        .update({ is_featured: !currentData.is_featured })
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error toggling partner featured status:", error)
+      throw new Error("Failed to toggle partner featured status")
+    }
+  }
+}
+
 // Combined CMS Hook
 export function useSupabaseCMS() {
   return {
@@ -319,5 +609,25 @@ export function useSupabaseCMS() {
     toggleBlogPublishStatus: BlogCMS.toggleBlogPublishStatus,
     searchBlogPosts: BlogCMS.searchBlogPosts,
     getBlogPostsByTag: BlogCMS.getBlogPostsByTag,
+
+    // Reviews methods
+    getAllReviews: ReviewsCMS.getAllReviews,
+    getPublishedReviews: ReviewsCMS.getPublishedReviews,
+    getFeaturedReviews: ReviewsCMS.getFeaturedReviews,
+    addReview: ReviewsCMS.addReview,
+    updateReview: ReviewsCMS.updateReview,
+    deleteReview: ReviewsCMS.deleteReview,
+    toggleReviewPublishStatus: ReviewsCMS.toggleReviewPublishStatus,
+    toggleReviewFeaturedStatus: ReviewsCMS.toggleReviewFeaturedStatus,
+
+    // Partners methods
+    getAllPartners: PartnersCMS.getAllPartners,
+    getPublishedPartners: PartnersCMS.getPublishedPartners,
+    getFeaturedPartners: PartnersCMS.getFeaturedPartners,
+    addPartner: PartnersCMS.addPartner,
+    updatePartner: PartnersCMS.updatePartner,
+    deletePartner: PartnersCMS.deletePartner,
+    togglePartnerPublishStatus: PartnersCMS.togglePartnerPublishStatus,
+    togglePartnerFeaturedStatus: PartnersCMS.togglePartnerFeaturedStatus,
   }
 }

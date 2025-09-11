@@ -2,176 +2,199 @@
 
 import { useState, useEffect } from "react"
 
-// Admin configuration
-const ADMIN_CONFIG = {
-  PIN: "2024", // Change this to your desired PIN
-  SESSION_DURATION: 30 * 60 * 1000, // 30 minutes in milliseconds
-  MAX_ATTEMPTS: 5,
-  LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes lockout
-}
+const ADMIN_PIN = "2024"
+const SESSION_DURATION = 30 * 60 * 1000 // 30 minutes
+const MAX_ATTEMPTS = 5
+const LOCKOUT_DURATION = 15 * 60 * 1000 // 15 minutes
 
 interface AuthState {
   isAuthenticated: boolean
+  sessionStart: number | null
   attempts: number
-  lockedUntil: number | null
-  sessionExpiry: number | null
+  lockoutStart: number | null
 }
 
-// Storage keys
-const STORAGE_KEYS = {
-  AUTH_STATE: "rapidx_admin_auth",
-  SESSION: "rapidx_admin_session",
-}
-
-export function useAdminAuth() {
-  const [authState, setAuthState] = useState<AuthState>({
-    isAuthenticated: false,
-    attempts: 0,
-    lockedUntil: null,
-    sessionExpiry: null,
-  })
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Initialize auth state from localStorage
-  useEffect(() => {
-    const initAuth = () => {
-      try {
-        const savedAuth = localStorage.getItem(STORAGE_KEYS.AUTH_STATE)
-        const savedSession = localStorage.getItem(STORAGE_KEYS.SESSION)
-
-        if (savedAuth) {
-          const parsedAuth = JSON.parse(savedAuth)
-          const now = Date.now()
-
-          // Check if locked
-          if (parsedAuth.lockedUntil && now < parsedAuth.lockedUntil) {
-            setAuthState(parsedAuth)
-            setIsLoading(false)
-            return
-          }
-
-          // Check session validity
-          if (savedSession && parsedAuth.sessionExpiry && now < parsedAuth.sessionExpiry) {
-            setAuthState({ ...parsedAuth, isAuthenticated: true })
-          } else {
-            // Session expired, clear auth
-            clearAuth()
-          }
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error)
-        clearAuth()
-      }
-      setIsLoading(false)
-    }
-
-    initAuth()
-  }, [])
-
-  // Save auth state to localStorage
-  const saveAuthState = (newState: AuthState) => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.AUTH_STATE, JSON.stringify(newState))
-      if (newState.isAuthenticated) {
-        localStorage.setItem(STORAGE_KEYS.SESSION, "active")
-      }
-    } catch (error) {
-      console.error("Error saving auth state:", error)
-    }
-  }
-
-  // Clear authentication
-  const clearAuth = () => {
-    const clearedState = {
+const getStoredAuthState = (): AuthState => {
+  if (typeof window === "undefined") {
+    return {
       isAuthenticated: false,
+      sessionStart: null,
       attempts: 0,
-      lockedUntil: null,
-      sessionExpiry: null,
-    }
-    setAuthState(clearedState)
-    localStorage.removeItem(STORAGE_KEYS.AUTH_STATE)
-    localStorage.removeItem(STORAGE_KEYS.SESSION)
-  }
-
-  // Authenticate with PIN
-  const authenticate = (pin: string): { success: boolean; message: string } => {
-    const now = Date.now()
-
-    // Check if locked
-    if (authState.lockedUntil && now < authState.lockedUntil) {
-      const remainingTime = Math.ceil((authState.lockedUntil - now) / 60000)
-      return {
-        success: false,
-        message: `Account locked. Try again in ${remainingTime} minutes.`,
-      }
-    }
-
-    // Validate PIN
-    if (pin === ADMIN_CONFIG.PIN) {
-      const newState = {
-        isAuthenticated: true,
-        attempts: 0,
-        lockedUntil: null,
-        sessionExpiry: now + ADMIN_CONFIG.SESSION_DURATION,
-      }
-      setAuthState(newState)
-      saveAuthState(newState)
-      return { success: true, message: "Authentication successful!" }
-    } else {
-      const newAttempts = authState.attempts + 1
-      const newState = {
-        ...authState,
-        attempts: newAttempts,
-        lockedUntil: newAttempts >= ADMIN_CONFIG.MAX_ATTEMPTS ? now + ADMIN_CONFIG.LOCKOUT_DURATION : null,
-      }
-      setAuthState(newState)
-      saveAuthState(newState)
-
-      if (newAttempts >= ADMIN_CONFIG.MAX_ATTEMPTS) {
-        return {
-          success: false,
-          message: `Too many failed attempts. Account locked for 15 minutes.`,
-        }
-      } else {
-        return {
-          success: false,
-          message: `Invalid PIN. ${ADMIN_CONFIG.MAX_ATTEMPTS - newAttempts} attempts remaining.`,
-        }
-      }
+      lockoutStart: null,
     }
   }
 
-  // Logout
-  const logout = () => {
-    clearAuth()
-  }
-
-  // Check if session is valid
-  const isSessionValid = () => {
-    if (!authState.isAuthenticated || !authState.sessionExpiry) return false
-    return Date.now() < authState.sessionExpiry
-  }
-
-  // Get remaining session time
-  const getRemainingSessionTime = () => {
-    if (!authState.sessionExpiry) return 0
-    return Math.max(0, authState.sessionExpiry - Date.now())
-  }
-
-  // Get lockout remaining time
-  const getLockoutRemainingTime = () => {
-    if (!authState.lockedUntil) return 0
-    return Math.max(0, authState.lockedUntil - Date.now())
+  try {
+    const stored = localStorage.getItem("admin_auth_state")
+    if (stored) {
+      return JSON.parse(stored)
+    }
+  } catch (error) {
+    console.error("Error parsing stored auth state:", error)
   }
 
   return {
-    isAuthenticated: authState.isAuthenticated && isSessionValid(),
+    isAuthenticated: false,
+    sessionStart: null,
+    attempts: 0,
+    lockoutStart: null,
+  }
+}
+
+const setStoredAuthState = (state: AuthState) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("admin_auth_state", JSON.stringify(state))
+  }
+}
+
+export function useAdminAuth() {
+  const [authState, setAuthState] = useState<AuthState>(getStoredAuthState)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const currentTime = Date.now()
+      const state = getStoredAuthState()
+
+      // Check if locked out
+      if (state.lockoutStart && currentTime - state.lockoutStart < LOCKOUT_DURATION) {
+        setAuthState(state)
+        setIsLoading(false)
+        return
+      }
+
+      // Clear lockout if expired
+      if (state.lockoutStart && currentTime - state.lockoutStart >= LOCKOUT_DURATION) {
+        const newState = { ...state, lockoutStart: null, attempts: 0 }
+        setAuthState(newState)
+        setStoredAuthState(newState)
+        setIsLoading(false)
+        return
+      }
+
+      // Check session validity
+      if (state.isAuthenticated && state.sessionStart) {
+        if (currentTime - state.sessionStart < SESSION_DURATION) {
+          setAuthState(state)
+        } else {
+          // Session expired
+          const newState = { ...state, isAuthenticated: false, sessionStart: null }
+          setAuthState(newState)
+          setStoredAuthState(newState)
+        }
+      } else {
+        setAuthState(state)
+      }
+
+      setIsLoading(false)
+    }
+
+    checkAuthStatus()
+
+    // Check session every minute
+    const interval = setInterval(checkAuthStatus, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const authenticate = (pin: string) => {
+    const currentTime = Date.now()
+    const currentState = getStoredAuthState()
+
+    // Check if locked out
+    if (currentState.lockoutStart && currentTime - currentState.lockoutStart < LOCKOUT_DURATION) {
+      const remainingTime = Math.ceil((LOCKOUT_DURATION - (currentTime - currentState.lockoutStart)) / 1000)
+      return {
+        success: false,
+        message: `Account locked. Try again in ${Math.ceil(remainingTime / 60)} minutes.`,
+      }
+    }
+
+    if (pin === ADMIN_PIN) {
+      const newState: AuthState = {
+        isAuthenticated: true,
+        sessionStart: currentTime,
+        attempts: 0,
+        lockoutStart: null,
+      }
+      setAuthState(newState)
+      setStoredAuthState(newState)
+      return { success: true, message: "Authentication successful" }
+    } else {
+      const newAttempts = currentState.attempts + 1
+      const newState: AuthState = {
+        ...currentState,
+        isAuthenticated: false,
+        attempts: newAttempts,
+        lockoutStart: newAttempts >= MAX_ATTEMPTS ? currentTime : null,
+      }
+      setAuthState(newState)
+      setStoredAuthState(newState)
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        return {
+          success: false,
+          message: "Too many failed attempts. Account locked for 15 minutes.",
+        }
+      }
+
+      return {
+        success: false,
+        message: `Invalid PIN. ${MAX_ATTEMPTS - newAttempts} attempts remaining.`,
+      }
+    }
+  }
+
+  const logout = () => {
+    const newState: AuthState = {
+      isAuthenticated: false,
+      sessionStart: null,
+      attempts: authState.attempts,
+      lockoutStart: authState.lockoutStart,
+    }
+    setAuthState(newState)
+    setStoredAuthState(newState)
+  }
+
+  const getRemainingSessionTime = () => {
+    if (!authState.isAuthenticated || !authState.sessionStart) return 0
+    const elapsed = Date.now() - authState.sessionStart
+    return Math.max(0, SESSION_DURATION - elapsed)
+  }
+
+  const getLockoutRemainingTime = () => {
+    if (!authState.lockoutStart) return 0
+    const elapsed = Date.now() - authState.lockoutStart
+    return Math.max(0, LOCKOUT_DURATION - elapsed)
+  }
+
+  const isLocked = authState.lockoutStart && getLockoutRemainingTime() > 0
+
+  return {
+    isAuthenticated: authState.isAuthenticated && !isLocked,
     isLoading,
     attempts: authState.attempts,
-    isLocked: authState.lockedUntil ? Date.now() < authState.lockedUntil : false,
+    isLocked: !!isLocked,
     authenticate,
     logout,
     getRemainingSessionTime,
     getLockoutRemainingTime,
   }
+}
+
+export const authenticateAdmin = (pin: string) => {
+  return pin === ADMIN_PIN ? { success: true } : { success: false, error: "Invalid PIN" }
+}
+
+export const clearAdminSession = () => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("admin_auth_state")
+  }
+}
+
+export const isAdminAuthenticated = () => {
+  const state = getStoredAuthState()
+  if (!state.isAuthenticated || !state.sessionStart) return false
+
+  const currentTime = Date.now()
+  return currentTime - state.sessionStart < SESSION_DURATION
 }

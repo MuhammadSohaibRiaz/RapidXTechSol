@@ -4,13 +4,33 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, ChevronRight, Star } from "lucide-react"
 import { useThemeContext } from "@/context/theme-context"
-import { testimonials } from "@/lib/testimonials-data"
+import { ReviewsCMS } from "@/lib/supabase-cms"
+import type { ClientReview } from "@/lib/supabase"
 
 export function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [direction, setDirection] = useState(0) // 1 for next, -1 for previous
+  const [testimonials, setTestimonials] = useState<ClientReview[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const { mode, color } = useThemeContext()
+
+  // Load testimonials from Supabase
+  useEffect(() => {
+    loadTestimonials()
+  }, [])
+
+  const loadTestimonials = async () => {
+    try {
+      setIsLoading(true)
+      const data = await ReviewsCMS.getPublishedReviews()
+      setTestimonials(data)
+    } catch (error) {
+      console.error("Error loading testimonials:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Auto-play functionality
   useEffect(() => {
@@ -22,7 +42,7 @@ export function TestimonialsSection() {
     }, 5000) // Change every 5 seconds
 
     return () => clearInterval(interval)
-  }, [isAutoPlaying])
+  }, [isAutoPlaying, testimonials.length])
 
   const goToPrevious = () => {
     setIsAutoPlaying(false)
@@ -49,8 +69,6 @@ export function TestimonialsSection() {
     // Resume auto-play after 10 seconds
     setTimeout(() => setIsAutoPlaying(true), 10000)
   }
-
-  const currentTestimonial = testimonials[currentIndex]
 
   // Smooth slide variants
   const slideVariants = {
@@ -88,6 +106,58 @@ export function TestimonialsSection() {
       return "bg-background/90 hover:bg-background text-foreground border border-border shadow-lg"
     }
   }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <section className="py-32 theme-bg relative overflow-hidden theme-transition">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center mb-16">
+            <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded w-96 mx-auto mb-4 animate-pulse" />
+            <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-128 mx-auto animate-pulse" />
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <div
+              className={`${mode === "dark" || color === "black" ? "bg-gray-900/40" : "bg-white/40"} backdrop-blur-md rounded-2xl p-12 shadow-2xl animate-pulse`}
+            >
+              <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-full mb-4" />
+              <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-5/6 mb-4" />
+              <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-4/6 mb-8" />
+              <div className="flex items-center">
+                <div className="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full mr-4" />
+                <div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-32 mb-2" />
+                  <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-40" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  // Empty state
+  if (testimonials.length === 0) {
+    return (
+      <section className="py-32 theme-bg relative overflow-hidden theme-transition">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center">
+            <h2 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent theme-gradient-text theme-transition mb-4">
+              What Our Clients Say
+            </h2>
+            <p className="text-xl theme-text opacity-70 max-w-2xl mx-auto theme-transition">
+              No testimonials available at the moment.
+            </p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  const currentTestimonial = testimonials[currentIndex]
 
   return (
     <section className="py-32 theme-bg relative overflow-hidden theme-transition">
@@ -211,7 +281,7 @@ export function TestimonialsSection() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4 }}
                       >
-                        "{currentTestimonial.content}"
+                        "{currentTestimonial.review_text}"
                       </motion.blockquote>
 
                       {/* Client info */}
@@ -227,14 +297,16 @@ export function TestimonialsSection() {
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
                         >
-                          {currentTestimonial.image ? (
+                          {currentTestimonial.client_image ? (
                             <img
-                              src={currentTestimonial.image || "/placeholder.svg"}
-                              alt={currentTestimonial.name}
+                              src={currentTestimonial.client_image || "/placeholder.svg"}
+                              alt={currentTestimonial.client_name}
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-white text-xl font-bold">{currentTestimonial.name.charAt(0)}</span>
+                            <span className="text-white text-xl font-bold">
+                              {currentTestimonial.client_name.charAt(0)}
+                            </span>
                           )}
                         </motion.div>
                         <div>
@@ -244,7 +316,7 @@ export function TestimonialsSection() {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.7 }}
                           >
-                            {currentTestimonial.name}
+                            {currentTestimonial.client_name}
                           </motion.h4>
                           <motion.p
                             className="theme-text opacity-70 theme-transition"
@@ -252,8 +324,18 @@ export function TestimonialsSection() {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.8 }}
                           >
-                            {currentTestimonial.position} at {currentTestimonial.company}
+                            {currentTestimonial.client_position} at {currentTestimonial.client_company}
                           </motion.p>
+                          {currentTestimonial.project_category && (
+                            <motion.p
+                              className="text-sm text-primary mt-1"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.9 }}
+                            >
+                              {currentTestimonial.project_category}
+                            </motion.p>
+                          )}
                         </div>
                       </motion.div>
                     </motion.div>
