@@ -1,121 +1,182 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { OptimizedImage } from "./optimized-image"
 import { useThemeContext } from "@/context/theme-context"
-
-const trustedPartners = [
-  { name: "Startup Alpha", logo: "/placeholder.svg?height=36&width=110&text=Alpha" },
-  { name: "Beta Innovations", logo: "/placeholder.svg?height=36&width=110&text=Beta" },
-  { name: "Gamma Tech", logo: "/placeholder.svg?height=36&width=110&text=Gamma" },
-  { name: "Delta Solutions", logo: "/placeholder.svg?height=36&width=110&text=Delta" },
-]
+import { PartnersCMS } from "@/lib/supabase-cms"
+import type { TrustedPartner } from "@/lib/supabase"
 
 export function ElegantPartners() {
-  const [visiblePartners, setVisiblePartners] = useState([0, 1])
-  const { color, mode } = useThemeContext()
+  const { mode, color } = useThemeContext()
+  const [partners, setPartners] = useState<TrustedPartner[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVisiblePartners((prev) => {
-        const next = [(prev[0] + 1) % trustedPartners.length, (prev[1] + 1) % trustedPartners.length]
-        return next
-      })
-    }, 3500)
-    return () => clearInterval(interval)
+    loadPartners()
   }, [])
+
+  const loadPartners = async () => {
+    try {
+      const data = await PartnersCMS.getPublishedPartners()
+      setPartners(data)
+    } catch (error) {
+      console.error("Error loading partners:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getCardBgClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "bg-gray-900/40"
+    } else {
+      return "bg-white/40"
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <section className="py-20 theme-bg theme-transition">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-64 mx-auto mb-4 animate-pulse" />
+            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-96 mx-auto animate-pulse" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 animate-pulse`}>
+                <div className="h-16 bg-gray-300 dark:bg-gray-700 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (partners.length === 0) {
+    return null
+  }
 
   return (
     <section className="py-20 theme-bg theme-transition relative overflow-hidden">
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 opacity-[0.02]">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center" />
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
       </div>
 
-      <div className="container mx-auto px-4 relative">
+      <div className="container mx-auto px-6 relative z-10">
+        {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center max-w-2xl mx-auto"
+          viewport={{ once: true }}
+          className="text-center mb-16"
         >
-          {/* Elegant heading */}
-          <div className="mb-12">
+          <h2 className="text-3xl md:text-5xl font-bold bg-clip-text text-transparent theme-gradient-text theme-transition mb-6">
+            Trusted Partners
+          </h2>
+          <p className="text-xl theme-text opacity-80 theme-transition max-w-3xl mx-auto">
+            We collaborate with industry leaders to deliver exceptional results for our clients.
+          </p>
+        </motion.div>
+
+        {/* Partners Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-8">
+          {partners.map((partner, index) => (
             <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className="inline-flex items-center space-x-2 mb-4"
+              key={partner.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 theme-transition group cursor-pointer`}
+              onClick={() => partner.company_website && window.open(partner.company_website, "_blank")}
             >
-              <div className={`w-8 h-[1px] ${mode === "dark" || color === "black" ? "bg-gray-600" : "bg-gray-400"}`} />
-              <span className="text-xs uppercase tracking-[0.2em] theme-text opacity-60 theme-transition">
-                Partnerships
-              </span>
-              <div className={`w-8 h-[1px] ${mode === "dark" || color === "black" ? "bg-gray-600" : "bg-gray-400"}`} />
+              <div className="relative h-16 flex items-center justify-center">
+                <OptimizedImage
+                  src={partner.company_logo}
+                  alt={partner.company_name}
+                  width={120}
+                  height={60}
+                  className="object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110"
+                />
+              </div>
+
+              {/* Partner Info on Hover */}
+              <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <h4 className="font-semibold theme-text text-center text-sm theme-transition">
+                  {partner.company_name}
+                </h4>
+                {partner.partnership_type && (
+                  <p className="text-xs theme-text opacity-70 text-center mt-1 capitalize theme-transition">
+                    {partner.partnership_type} Partner
+                  </p>
+                )}
+                {partner.is_featured && (
+                  <div className="flex justify-center mt-2">
+                    <span className="px-2 py-1 bg-yellow-500/20 text-yellow-600 rounded text-xs font-medium">
+                      Featured
+                    </span>
+                  </div>
+                )}
+              </div>
             </motion.div>
-            <h2 className="text-xl md:text-2xl font-light theme-text opacity-90 theme-transition">
-              Building the future together
-            </h2>
-          </div>
+          ))}
+        </div>
 
-          {/* Partners display */}
-          <div className="flex justify-center items-center space-x-12 md:space-x-16 h-20">
-            {visiblePartners.map((partnerIndex, displayIndex) => (
-              <motion.div
-                key={`${trustedPartners[partnerIndex].name}-${partnerIndex}`}
-                initial={{ opacity: 0, x: displayIndex === 0 ? -30 : 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  duration: 0.8,
-                  delay: displayIndex * 0.1,
-                  ease: [0.25, 0.46, 0.45, 0.94],
-                }}
-                className={`group cursor-pointer ${
-                  mode === "dark" || color === "black" ? "grayscale hover:grayscale-0" : "opacity-50 hover:opacity-100"
-                } transition-all duration-700 hover:scale-105`}
-              >
-                <img
-                  src={trustedPartners[partnerIndex].logo || "/placeholder.svg"}
-                  alt={trustedPartners[partnerIndex].name}
-                  className="h-9 w-auto object-contain filter group-hover:brightness-110 transition-all duration-300"
-                />
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Elegant progress indicator */}
+        {/* Featured Partners Section */}
+        {partners.some((p) => p.is_featured) && (
           <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="mt-10 flex justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-16"
           >
-            <div className="flex space-x-1">
-              {trustedPartners.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-[2px] transition-all duration-700 ${
-                    visiblePartners.includes(index)
-                      ? "w-6 bg-primary"
-                      : mode === "dark" || color === "black"
-                        ? "w-2 bg-gray-700"
-                        : "w-2 bg-gray-300"
-                  }`}
-                />
-              ))}
+            <h3 className="text-2xl font-bold theme-text text-center mb-8 theme-transition">Featured Partnerships</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {partners
+                .filter((p) => p.is_featured)
+                .map((partner, index) => (
+                  <motion.div
+                    key={partner.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 theme-transition`}
+                  >
+                    <div className="text-center">
+                      <div className="relative h-20 mb-4 flex items-center justify-center">
+                        <OptimizedImage
+                          src={partner.company_logo}
+                          alt={partner.company_name}
+                          width={160}
+                          height={80}
+                          className="object-contain"
+                        />
+                      </div>
+                      <h4 className="font-bold theme-text mb-2 theme-transition">{partner.company_name}</h4>
+                      {partner.description && (
+                        <p className="theme-text opacity-70 text-sm theme-transition">{partner.description}</p>
+                      )}
+                      {partner.company_website && (
+                        <a
+                          href={partner.company_website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-4 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+                        >
+                          Visit Website →
+                        </a>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
             </div>
           </motion.div>
-
-          {/* Subtle call-to-action */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.8 }}
-            className="text-xs theme-text opacity-40 mt-8 theme-transition"
-          >
-            Join our growing network of innovative partners
-          </motion.p>
-        </motion.div>
+        )}
       </div>
     </section>
   )
