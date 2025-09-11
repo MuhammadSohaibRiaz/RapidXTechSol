@@ -2,354 +2,186 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, Star } from "lucide-react"
+import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { useThemeContext } from "@/context/theme-context"
-import { testimonials } from "@/lib/testimonials-data"
+import type { ClientReview } from "@/lib/supabase"
+import { getImageUrl } from "@/lib/utils"
 
-export function TestimonialsSection() {
+interface TestimonialsSectionProps {
+  reviews: ClientReview[]
+}
+
+export function TestimonialsSection({ reviews }: TestimonialsSectionProps) {
+  const { mode, color } = useThemeContext()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
-  const [direction, setDirection] = useState(0) // 1 for next, -1 for previous
-  const { mode, color } = useThemeContext()
 
   // Auto-play functionality
   useEffect(() => {
-    if (!isAutoPlaying || testimonials.length <= 1) return
+    if (!isAutoPlaying || reviews.length <= 1) return
 
     const interval = setInterval(() => {
-      setDirection(1)
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length)
-    }, 5000) // Change every 5 seconds
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % reviews.length)
+    }, 5000)
 
     return () => clearInterval(interval)
-  }, [isAutoPlaying])
+  }, [isAutoPlaying, reviews.length])
 
-  const goToPrevious = () => {
+  const nextTestimonial = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % reviews.length)
     setIsAutoPlaying(false)
-    setDirection(-1)
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + testimonials.length) % testimonials.length)
-    // Resume auto-play after 10 seconds
-    setTimeout(() => setIsAutoPlaying(true), 10000)
   }
 
-  const goToNext = () => {
+  const prevTestimonial = () => {
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + reviews.length) % reviews.length)
     setIsAutoPlaying(false)
-    setDirection(1)
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length)
-    // Resume auto-play after 10 seconds
-    setTimeout(() => setIsAutoPlaying(true), 10000)
   }
 
-  const goToSlide = (index: number) => {
-    if (index === currentIndex) return
-
-    setIsAutoPlaying(false)
-    setDirection(index > currentIndex ? 1 : -1)
+  const goToTestimonial = (index: number) => {
     setCurrentIndex(index)
-    // Resume auto-play after 10 seconds
-    setTimeout(() => setIsAutoPlaying(true), 10000)
+    setIsAutoPlaying(false)
   }
 
-  const currentTestimonial = testimonials[currentIndex]
-
-  // Smooth slide variants
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.8,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-      scale: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.8,
-    }),
-  }
-
-  const swipeConfidenceThreshold = 10000
-  const swipePower = (offset: number, velocity: number) => {
-    return Math.abs(offset) * velocity
-  }
-
-  // Get button styles based on theme
-  const getArrowButtonClass = () => {
-    if (color === "white" && mode === "light") {
-      return "bg-white/90 hover:bg-white text-gray-800 border border-gray-200 shadow-lg"
-    } else if (color === "black" || mode === "dark") {
-      return "bg-gray-900/90 hover:bg-gray-800 text-white border border-gray-700 shadow-lg"
+  const getCardBgClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "bg-gray-900/40"
     } else {
-      return "bg-background/90 hover:bg-background text-foreground border border-border shadow-lg"
+      return "bg-white/40"
     }
   }
 
-  return (
-    <section className="py-32 theme-bg relative overflow-hidden theme-transition">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
-      <motion.div
-        className="absolute inset-0 theme-glow blur-3xl theme-transition"
-        animate={{
-          x: ["0%", "100%", "0%"],
-          y: ["0%", "50%", "0%"],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "linear",
-        }}
-      />
+  if (reviews.length === 0) return null
 
-      <div className="container mx-auto px-4 relative z-10">
+  return (
+    <section className="py-20 px-6 relative z-10">
+      <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent theme-gradient-text theme-transition mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent theme-gradient-text theme-transition">
             What Our Clients Say
           </h2>
-          <p className="text-xl theme-text opacity-70 max-w-2xl mx-auto theme-transition">
-            Don't just take our word for it - hear from the clients who've experienced our commitment to excellence
+          <p className="text-xl theme-text opacity-80 max-w-3xl mx-auto theme-transition">
+            Don't just take our word for it. Here's what our satisfied clients have to say about working with us.
           </p>
         </motion.div>
 
-        {/* Main container with arrows positioned outside */}
-        <div className="max-w-6xl mx-auto relative">
-          <div className="flex items-center justify-center">
-            {/* Left Arrow - Outside the card */}
-            {testimonials.length > 1 && (
-              <motion.button
-                onClick={goToPrevious}
-                className={`hidden lg:flex items-center justify-center w-12 h-12 rounded-full ${getArrowButtonClass()} backdrop-blur-md transition-all duration-200 hover:scale-110 theme-transition mr-8 flex-shrink-0`}
-                aria-label="Previous testimonial"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+        <div className="relative max-w-4xl mx-auto">
+          {/* Main Testimonial Display */}
+          <div className="relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.5 }}
+                className={`${getCardBgClass()} backdrop-blur-md rounded-2xl p-8 md:p-12 shadow-2xl theme-transition`}
               >
-                <ChevronLeft className="w-6 h-6" />
-              </motion.button>
-            )}
+                <div className="flex flex-col items-center text-center">
+                  {/* Quote Icon */}
+                  <Quote className="w-12 h-12 text-primary mb-6 opacity-50" />
 
-            {/* Testimonial Card Container */}
-            <div className="flex-1 max-w-4xl">
-              <div className="relative overflow-hidden">
-                <div className="relative h-auto min-h-[400px] flex items-center">
-                  <AnimatePresence initial={false} custom={direction} mode="wait">
-                    <motion.div
-                      key={currentIndex}
-                      custom={direction}
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{
-                        x: { type: "spring", stiffness: 300, damping: 30 },
-                        opacity: { duration: 0.3 },
-                        scale: { duration: 0.3 },
-                      }}
-                      drag="x"
-                      dragConstraints={{ left: 0, right: 0 }}
-                      dragElastic={1}
-                      onDragEnd={(e, { offset, velocity }) => {
-                        const swipe = swipePower(offset.x, velocity.x)
+                  {/* Rating Stars */}
+                  <div className="flex items-center mb-6">
+                    {[...Array(reviews[currentIndex].rating)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
 
-                        if (swipe < -swipeConfidenceThreshold) {
-                          goToNext()
-                        } else if (swipe > swipeConfidenceThreshold) {
-                          goToPrevious()
-                        }
-                      }}
-                      className={`w-full ${
-                        mode === "dark" || color === "black" ? "bg-gray-900/40" : "bg-white/40"
-                      } backdrop-blur-md rounded-2xl p-8 md:p-12 shadow-2xl theme-transition cursor-grab active:cursor-grabbing border border-white/10`}
-                    >
-                      {/* Quote icon */}
-                      <motion.div
-                        className="mb-6"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                      >
-                        <svg
-                          className="w-12 h-12 theme-text opacity-30 theme-transition"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z" />
-                        </svg>
-                      </motion.div>
+                  {/* Testimonial Text */}
+                  <blockquote className="text-lg md:text-xl theme-text mb-8 leading-relaxed theme-transition max-w-3xl">
+                    "{reviews[currentIndex].review_text}"
+                  </blockquote>
 
-                      {/* Stars rating */}
-                      <motion.div
-                        className="flex mb-6"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        {[...Array(currentTestimonial.rating)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.3 + i * 0.1 }}
-                          >
-                            <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                          </motion.div>
-                        ))}
-                      </motion.div>
-
-                      {/* Testimonial content */}
-                      <motion.blockquote
-                        className="text-lg md:text-xl theme-text mb-8 leading-relaxed theme-transition"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                      >
-                        "{currentTestimonial.content}"
-                      </motion.blockquote>
-
-                      {/* Client info */}
-                      <motion.div
-                        className="flex items-center"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                      >
-                        <motion.div
-                          className="w-16 h-16 rounded-full overflow-hidden mr-4 bg-gradient-to-r theme-gradient-text flex items-center justify-center"
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
-                        >
-                          {currentTestimonial.image ? (
-                            <img
-                              src={currentTestimonial.image || "/placeholder.svg"}
-                              alt={currentTestimonial.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-white text-xl font-bold">{currentTestimonial.name.charAt(0)}</span>
-                          )}
-                        </motion.div>
-                        <div>
-                          <motion.h4
-                            className="font-semibold text-lg theme-text theme-transition"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.7 }}
-                          >
-                            {currentTestimonial.name}
-                          </motion.h4>
-                          <motion.p
-                            className="theme-text opacity-70 theme-transition"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.8 }}
-                          >
-                            {currentTestimonial.position} at {currentTestimonial.company}
-                          </motion.p>
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                  </AnimatePresence>
+                  {/* Client Info */}
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <img
+                        src={getImageUrl(reviews[currentIndex].client_image || "")}
+                        alt={reviews[currentIndex].client_name}
+                        className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                      />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-lg theme-text theme-transition">
+                        {reviews[currentIndex].client_name}
+                      </div>
+                      <div className="theme-text opacity-70 theme-transition">
+                        {reviews[currentIndex].client_position}
+                      </div>
+                      <div className="theme-text opacity-60 theme-transition">
+                        {reviews[currentIndex].client_company}
+                      </div>
+                      {reviews[currentIndex].project_category && (
+                        <div className="text-sm text-primary mt-1">{reviews[currentIndex].project_category}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Right Arrow - Outside the card */}
-            {testimonials.length > 1 && (
-              <motion.button
-                onClick={goToNext}
-                className={`hidden lg:flex items-center justify-center w-12 h-12 rounded-full ${getArrowButtonClass()} backdrop-blur-md transition-all duration-200 hover:scale-110 theme-transition ml-8 flex-shrink-0`}
-                aria-label="Next testimonial"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ChevronRight className="w-6 h-6" />
-              </motion.button>
-            )}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
-          {/* Mobile arrows - positioned at the bottom */}
-          {testimonials.length > 1 && (
-            <div className="flex lg:hidden justify-center mt-6 space-x-4">
-              <motion.button
-                onClick={goToPrevious}
-                className={`flex items-center justify-center w-10 h-10 rounded-full ${getArrowButtonClass()} backdrop-blur-md transition-all duration-200 hover:scale-110 theme-transition`}
+          {/* Navigation Arrows */}
+          {reviews.length > 1 && (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={prevTestimonial}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm border-gray-300 dark:border-gray-600 hover:bg-primary/20 transition-all duration-300 z-10"
                 aria-label="Previous testimonial"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
               >
-                <ChevronLeft className="w-5 h-5" />
-              </motion.button>
-              <motion.button
-                onClick={goToNext}
-                className={`flex items-center justify-center w-10 h-10 rounded-full ${getArrowButtonClass()} backdrop-blur-md transition-all duration-200 hover:scale-110 theme-transition`}
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={nextTestimonial}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm border-gray-300 dark:border-gray-600 hover:bg-primary/20 transition-all duration-300 z-10"
                 aria-label="Next testimonial"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
               >
-                <ChevronRight className="w-5 h-5" />
-              </motion.button>
-            </div>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
           )}
 
-          {/* Dots indicator */}
-          {testimonials.length > 1 && (
-            <div className="flex justify-center mt-8 space-x-2">
-              {testimonials.map((_, index) => (
-                <motion.button
+          {/* Dots Indicator */}
+          {reviews.length > 1 && (
+            <div className="flex justify-center space-x-2 mt-8">
+              {reviews.map((_, index) => (
+                <button
                   key={index}
-                  onClick={() => goToSlide(index)}
+                  onClick={() => goToTestimonial(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentIndex
-                      ? "bg-primary scale-125"
-                      : mode === "dark" || color === "black"
-                        ? "bg-gray-600 hover:bg-gray-500"
-                        : "bg-gray-300 hover:bg-gray-400"
+                    index === currentIndex ? "bg-primary scale-125" : "bg-gray-400 dark:bg-gray-600 hover:bg-primary/60"
                   }`}
                   aria-label={`Go to testimonial ${index + 1}`}
-                  whileHover={{ scale: index === currentIndex ? 1.25 : 1.1 }}
-                  whileTap={{ scale: 0.9 }}
                 />
               ))}
             </div>
           )}
 
-          {/* Auto-play indicator */}
-          {testimonials.length > 1 && (
-            <motion.div
-              className="flex justify-center mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-            >
-              <div className="flex items-center space-x-2 text-sm theme-text opacity-60 theme-transition">
-                <motion.div
-                  className={`w-2 h-2 rounded-full ${isAutoPlaying ? "bg-green-500" : "bg-gray-400"}`}
-                  animate={isAutoPlaying ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-                  transition={isAutoPlaying ? { duration: 1, repeat: Number.POSITIVE_INFINITY } : {}}
-                />
-                <span>{isAutoPlaying ? "Auto-playing" : "Paused"}</span>
-              </div>
-            </motion.div>
+          {/* Auto-play Control */}
+          {reviews.length > 1 && (
+            <div className="flex justify-center mt-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+                className="text-sm theme-text opacity-60 hover:opacity-100 theme-transition"
+              >
+                {isAutoPlaying ? "Pause" : "Play"} Auto-scroll
+              </Button>
+            </div>
           )}
-
-          {/* Swipe hint for mobile */}
-          <motion.div
-            className="flex justify-center mt-2 lg:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5 }}
-          >
-            <p className="text-xs theme-text opacity-50 theme-transition">Swipe left or right to navigate</p>
-          </motion.div>
         </div>
       </div>
     </section>
