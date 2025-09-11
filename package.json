@@ -10,7 +10,11 @@
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-label": "latest",
     "@radix-ui/react-slot": "latest",
+    "@radix-ui/react-switch": "latest",
+    "@radix-ui/react-tabs": "latest",
     "@remix-run/react": "latest",
     "@supabase/supabase-js": "latest",
     "@sveltejs/kit": "latest",

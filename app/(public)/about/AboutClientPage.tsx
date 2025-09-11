@@ -1,222 +1,301 @@
 "use client"
 
+import { motion } from "framer-motion"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Users, Target, Award, Heart, ArrowRight, CheckCircle } from "lucide-react"
+import { Users, Target, Award, Heart, Code, Lightbulb, Shield, Zap } from "lucide-react"
 import Link from "next/link"
+import { useThemeContext } from "@/context/theme-context"
 import { OptimizedImage } from "@/components/optimized-image"
 
+const values = [
+  {
+    icon: Code,
+    title: "Excellence in Code",
+    description: "We write clean, maintainable, and scalable code that stands the test of time.",
+  },
+  {
+    icon: Lightbulb,
+    title: "Innovation First",
+    description: "We stay ahead of technology trends to deliver cutting-edge solutions.",
+  },
+  {
+    icon: Heart,
+    title: "Client-Centric",
+    description: "Your success is our success. We build lasting partnerships with our clients.",
+  },
+  {
+    icon: Shield,
+    title: "Quality Assurance",
+    description: "Rigorous testing and quality control ensure flawless deliverables.",
+  },
+]
+
+const team = [
+  {
+    name: "Alex Johnson",
+    role: "CEO & Founder",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face",
+    bio: "10+ years in tech leadership, passionate about digital transformation.",
+  },
+  {
+    name: "Sarah Chen",
+    role: "CTO",
+    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face",
+    bio: "Full-stack architect with expertise in scalable web applications.",
+  },
+  {
+    name: "Michael Rodriguez",
+    role: "Lead Designer",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face",
+    bio: "Award-winning designer focused on user experience and interface design.",
+  },
+  {
+    name: "Emily Davis",
+    role: "Project Manager",
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face",
+    bio: "Agile expert ensuring projects are delivered on time and within budget.",
+  },
+]
+
+const stats = [
+  { icon: Users, number: "500+", label: "Happy Clients" },
+  { icon: Target, number: "1000+", label: "Projects Completed" },
+  { icon: Award, number: "50+", label: "Awards Won" },
+  { icon: Zap, number: "5+", label: "Years Experience" },
+]
+
 export function AboutClientPage() {
-  const values = [
-    {
-      icon: Target,
-      title: "Innovation First",
-      description:
-        "We stay ahead of technology trends to deliver cutting-edge solutions that give our clients a competitive advantage.",
-    },
-    {
-      icon: Users,
-      title: "Client-Centric",
-      description:
-        "Your success is our success. We work closely with you to understand your needs and exceed your expectations.",
-    },
-    {
-      icon: Award,
-      title: "Quality Excellence",
-      description:
-        "We maintain the highest standards in everything we do, from code quality to project delivery and client service.",
-    },
-    {
-      icon: Heart,
-      title: "Passionate Team",
-      description:
-        "Our team is passionate about technology and committed to creating solutions that make a real difference.",
-    },
-  ]
+  const { mode, color } = useThemeContext()
 
-  const team = [
-    {
-      name: "Alex Rodriguez",
-      role: "CEO & Founder",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face",
-      bio: "10+ years of experience in digital transformation and business strategy.",
-    },
-    {
-      name: "Sarah Kim",
-      role: "CTO",
-      image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face",
-      bio: "Expert in full-stack development and cloud architecture with 8+ years experience.",
-    },
-    {
-      name: "Michael Chen",
-      role: "Lead Designer",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face",
-      bio: "Award-winning UI/UX designer specializing in user-centered design principles.",
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Project Manager",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face",
-      bio: "Certified PMP with expertise in agile methodologies and client relationship management.",
-    },
-  ]
-
-  const achievements = [
-    "500+ successful projects delivered",
-    "99% client satisfaction rate",
-    "50+ enterprise clients served",
-    "24/7 support and maintenance",
-    "ISO 27001 certified processes",
-    "Award-winning design team",
-  ]
+  const getCardBgClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "bg-gray-900/40"
+    } else {
+      return "bg-white/40"
+    }
+  }
 
   return (
-    <div className="min-h-screen py-20">
-      <div className="container mx-auto px-4">
-        {/* Hero Section */}
-        <div className="text-center mb-20">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">About RapidXSolution</h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
-            We are a passionate team of digital innovators dedicated to transforming businesses through cutting-edge
-            technology solutions.
-          </p>
-          <div className="relative h-64 md:h-96 rounded-lg overflow-hidden max-w-4xl mx-auto">
-            <OptimizedImage
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=600&fit=crop"
-              alt="RapidXSolution team working together"
-              fill
-              className="object-cover"
-            />
-          </div>
-        </div>
+    <div className="min-h-screen theme-bg theme-transition relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+        <motion.div
+          className="absolute inset-0 theme-glow blur-3xl theme-transition"
+          animate={{
+            x: ["0%", "100%", "0%"],
+            y: ["0%", "50%", "0%"],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "linear",
+          }}
+        />
+      </div>
 
-        {/* Mission & Vision */}
-        <div className="grid md:grid-cols-2 gap-12 mb-20">
-          <Card className="border-l-4 border-l-blue-500">
-            <CardContent className="p-8">
-              <h2 className="text-3xl font-bold mb-4">Our Mission</h2>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                To empower businesses with innovative digital solutions that drive growth, enhance efficiency, and
-                create exceptional user experiences. We believe technology should be a catalyst for success, not a
-                barrier.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-purple-500">
-            <CardContent className="p-8">
-              <h2 className="text-3xl font-bold mb-4">Our Vision</h2>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                To be the leading digital transformation partner, recognized for our innovation, quality, and commitment
-                to client success. We envision a future where every business can leverage technology to reach its full
-                potential.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Values */}
-        <section className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Values</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">The principles that guide everything we do</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {values.map((value, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow duration-300">
-                <CardContent className="p-6">
-                  <value.icon className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold mb-3">{value.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300">{value.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* Team */}
-        <section className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Meet Our Team</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">The talented individuals behind our success</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow duration-300">
-                <CardContent className="p-6">
-                  <div className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden">
-                    <OptimizedImage src={member.image} alt={member.name} fill className="object-cover" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-1">{member.name}</h3>
-                  <Badge variant="secondary" className="mb-3">
-                    {member.role}
-                  </Badge>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{member.bio}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* Achievements */}
-        <section className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Achievements</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
-              Milestones that reflect our commitment to excellence
+      <div className="relative z-10 pt-32 pb-20 px-6">
+        <div className="container mx-auto">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-20"
+          >
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent theme-gradient-text theme-transition">
+              About RapidXSolution
+            </h1>
+            <p className="text-xl theme-text opacity-80 max-w-3xl mx-auto theme-transition">
+              We're a passionate team of developers, designers, and digital strategists committed to transforming
+              businesses through innovative technology solutions.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {achievements.map((achievement, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span className="text-gray-700 dark:text-gray-300">{achievement}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+          {/* Our Story */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="mb-20"
+          >
+            <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
+              <CardContent className="p-12">
+                <div className="grid lg:grid-cols-2 gap-12 items-center">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-6 bg-clip-text text-transparent theme-gradient-text theme-transition">
+                      Our Story
+                    </h2>
+                    <p className="text-lg theme-text opacity-80 mb-6 theme-transition leading-relaxed">
+                      Founded in 2019, RapidXSolution emerged from a simple belief: that every business deserves access
+                      to world-class digital solutions. What started as a small team of passionate developers has grown
+                      into a full-service digital agency.
+                    </p>
+                    <p className="text-lg theme-text opacity-80 mb-8 theme-transition leading-relaxed">
+                      Today, we've helped over 500 businesses transform their digital presence, from startups to Fortune
+                      500 companies. Our commitment to excellence and innovation drives everything we do.
+                    </p>
+                    <Button size="lg" className="bg-primary hover:bg-primary/90 text-white" asChild>
+                      <Link href="/contact">Work With Us</Link>
+                    </Button>
+                  </div>
+                  <div>
+                    <OptimizedImage
+                      src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop"
+                      alt="Our team working together"
+                      width={600}
+                      height={400}
+                      className="rounded-lg shadow-lg"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        {/* Company Stats */}
-        <section className="mb-20">
-          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-            <CardContent className="p-12">
-              <div className="grid md:grid-cols-4 gap-8 text-center">
-                <div>
-                  <div className="text-4xl font-bold mb-2">5+</div>
-                  <div className="text-blue-100">Years Experience</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-bold mb-2">500+</div>
-                  <div className="text-blue-100">Projects Completed</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-bold mb-2">50+</div>
-                  <div className="text-blue-100">Happy Clients</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-bold mb-2">24/7</div>
-                  <div className="text-blue-100">Support Available</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="mb-20"
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {stats.map((stat, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                >
+                  <Card
+                    className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition text-center`}
+                  >
+                    <CardContent className="p-8">
+                      <stat.icon className="w-12 h-12 mx-auto mb-4 text-primary" />
+                      <div className="text-3xl font-bold theme-text mb-2 theme-transition">{stat.number}</div>
+                      <div className="theme-text opacity-70 theme-transition">{stat.label}</div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
 
-        {/* CTA */}
-        <div className="text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Work With Us?</h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Let's discuss how we can help transform your business with innovative digital solutions.
-          </p>
-          <Button size="lg" asChild>
-            <Link href="/contact">
-              Start Your Project <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+          {/* Our Values */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="mb-20"
+          >
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 bg-clip-text text-transparent theme-gradient-text theme-transition">
+                Our Values
+              </h2>
+              <p className="text-xl theme-text opacity-80 max-w-3xl mx-auto theme-transition">
+                These core principles guide every decision we make and every solution we deliver
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {values.map((value, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                >
+                  <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition h-full`}>
+                    <CardContent className="p-8">
+                      <div className="flex items-center mb-6">
+                        <div className="p-3 bg-primary/20 rounded-lg mr-4">
+                          <value.icon className="w-8 h-8 text-primary" />
+                        </div>
+                        <h3 className="text-2xl font-bold theme-text theme-transition">{value.title}</h3>
+                      </div>
+                      <p className="theme-text opacity-80 theme-transition leading-relaxed">{value.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Our Team */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="mb-20"
+          >
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 bg-clip-text text-transparent theme-gradient-text theme-transition">
+                Meet Our Team
+              </h2>
+              <p className="text-xl theme-text opacity-80 max-w-3xl mx-auto theme-transition">
+                The talented individuals who make the magic happen
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {team.map((member, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                >
+                  <Card
+                    className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition text-center`}
+                  >
+                    <CardContent className="p-8">
+                      <OptimizedImage
+                        src={member.image}
+                        alt={member.name}
+                        width={150}
+                        height={150}
+                        className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
+                      />
+                      <h3 className="text-xl font-bold theme-text mb-2 theme-transition">{member.name}</h3>
+                      <Badge variant="secondary" className="mb-4">
+                        {member.role}
+                      </Badge>
+                      <p className="theme-text opacity-80 theme-transition text-sm">{member.bio}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
+              <CardContent className="p-12 text-center">
+                <h2 className="text-3xl md:text-4xl font-bold mb-6 bg-clip-text text-transparent theme-gradient-text theme-transition">
+                  Ready to Work Together?
+                </h2>
+                <p className="text-xl theme-text opacity-80 mb-8 max-w-2xl mx-auto theme-transition">
+                  Let's discuss your project and see how we can help you achieve your digital goals
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-4" asChild>
+                    <Link href="/contact">Start Your Project</Link>
+                  </Button>
+                  <Button size="lg" variant="outline" className="px-8 py-4 bg-transparent" asChild>
+                    <Link href="/portfolio">View Our Work</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,6 +13,8 @@ import { FloatingCards } from "@/components/floating-cards"
 import { ScrollSection } from "@/components/scroll-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
 import { ElegantPartners } from "@/components/elegant-partners"
+import { ReviewsCMS, PartnersCMS } from "@/lib/supabase-cms"
+import type { ClientReview, TrustedPartner } from "@/lib/supabase"
 
 const services = [
   {
@@ -51,6 +54,28 @@ const achievements = [
 
 export default function Home() {
   const { mode, color } = useThemeContext()
+  const [reviews, setReviews] = useState<ClientReview[]>([])
+  const [partners, setPartners] = useState<TrustedPartner[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [reviewsData, partnersData] = await Promise.all([
+          ReviewsCMS.getFeaturedReviews(),
+          PartnersCMS.getFeaturedPartners(),
+        ])
+        setReviews(reviewsData)
+        setPartners(partnersData)
+      } catch (error) {
+        console.error("Error fetching homepage data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const getCardBgClass = () => {
     if (mode === "dark" || color === "black") {
@@ -192,10 +217,10 @@ export default function Home() {
       <ScrollSection />
 
       {/* Testimonials Section */}
-      <TestimonialsSection />
+      {!loading && reviews.length > 0 && <TestimonialsSection reviews={reviews} />}
 
       {/* Partners Section */}
-      <ElegantPartners />
+      {!loading && partners.length > 0 && <ElegantPartners partners={partners} />}
 
       {/* CTA Section */}
       <section className="relative z-10 py-20 px-6">

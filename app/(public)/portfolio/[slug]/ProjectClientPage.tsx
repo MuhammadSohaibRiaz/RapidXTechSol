@@ -1,20 +1,21 @@
 "use client"
 
 import { motion } from "framer-motion"
-import Link from "next/link"
-import { ArrowLeft, ExternalLink, Github, Calendar, Users, Building, Star, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ImageCarousel } from "@/components/image-carousel"
+import { ArrowLeft, ExternalLink, Github, Calendar, Users, CheckCircle, Star } from "lucide-react"
+import Link from "next/link"
 import { useThemeContext } from "@/context/theme-context"
-import type { ProjectDetail } from "@/lib/supabase-cms"
+import type { ProjectDetail } from "@/lib/supabase"
+import { OptimizedImage } from "@/components/optimized-image"
+import { ImageCarousel } from "@/components/image-carousel"
 
-interface ProjectClientPageProps {
+interface Props {
   project: ProjectDetail
 }
 
-export function ProjectClientPage({ project }: ProjectClientPageProps) {
+export function ProjectClientPage({ project }: Props) {
   const { mode, color } = useThemeContext()
 
   const getCardBgClass = () => {
@@ -27,6 +28,7 @@ export function ProjectClientPage({ project }: ProjectClientPageProps) {
 
   return (
     <div className="min-h-screen theme-bg theme-transition relative overflow-hidden">
+      {/* Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
         <motion.div
@@ -43,302 +45,267 @@ export function ProjectClientPage({ project }: ProjectClientPageProps) {
         />
       </div>
 
-      <div className="container mx-auto px-6 py-12 relative z-10">
-        {/* Back Button */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <Button variant="outline" className="theme-text hover:opacity-80 theme-transition bg-transparent" asChild>
-            <Link href="/portfolio">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Portfolio
-            </Link>
-          </Button>
-        </motion.div>
+      <div className="relative z-10 pt-32 pb-20 px-6">
+        <div className="container mx-auto max-w-6xl">
+          {/* Back Button */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-8">
+            <Button variant="outline" asChild className="bg-transparent">
+              <Link href="/portfolio">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Portfolio
+              </Link>
+            </Button>
+          </motion.div>
 
-        {/* Project Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-12"
-        >
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Badge variant="secondary" className="bg-primary/20 text-primary">
-              {project.category}
-            </Badge>
-            {project.technology.slice(0, 3).map((tech) => (
-              <Badge key={tech} variant="outline" className="bg-secondary/20 theme-text theme-transition">
-                {tech}
-              </Badge>
-            ))}
+          {/* Project Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mb-12"
+          >
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+              <div className="flex-1">
+                <Badge variant="secondary" className="mb-4 bg-primary/20 text-primary">
+                  {project.category}
+                </Badge>
+                <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent theme-gradient-text theme-transition">
+                  {project.title}
+                </h1>
+                <p className="text-xl theme-text opacity-80 mb-8 theme-transition">{project.description}</p>
+
+                {/* Project Meta */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  <div className="text-center">
+                    <Calendar className="w-6 h-6 mx-auto mb-2 text-primary" />
+                    <div className="text-sm theme-text opacity-70 theme-transition">Duration</div>
+                    <div className="font-semibold theme-text theme-transition">{project.duration}</div>
+                  </div>
+                  <div className="text-center">
+                    <Users className="w-6 h-6 mx-auto mb-2 text-primary" />
+                    <div className="text-sm theme-text opacity-70 theme-transition">Team Size</div>
+                    <div className="font-semibold theme-text theme-transition">{project.team_size} members</div>
+                  </div>
+                  <div className="text-center">
+                    <CheckCircle className="w-6 h-6 mx-auto mb-2 text-primary" />
+                    <div className="text-sm theme-text opacity-70 theme-transition">Status</div>
+                    <div className="font-semibold theme-text theme-transition">Completed</div>
+                  </div>
+                  <div className="text-center">
+                    <Star className="w-6 h-6 mx-auto mb-2 text-primary" />
+                    <div className="text-sm theme-text opacity-70 theme-transition">Client Type</div>
+                    <div className="font-semibold theme-text theme-transition">{project.client_type}</div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4">
+                  {project.live_url && (
+                    <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+                      <a href={project.live_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        View Live Site
+                      </a>
+                    </Button>
+                  )}
+                  {project.github_url && (
+                    <Button variant="outline" asChild className="bg-transparent">
+                      <a href={project.github_url} target="_blank" rel="noopener noreferrer">
+                        <Github className="w-4 h-4 mr-2" />
+                        View Code
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Project Image */}
+              <div className="lg:w-1/2">
+                <Card
+                  className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition overflow-hidden`}
+                >
+                  <OptimizedImage
+                    src={project.images[0]?.url || "/placeholder.svg?height=400&width=600&text=Project+Image"}
+                    alt={project.title}
+                    width={600}
+                    height={400}
+                    className="w-full h-auto"
+                  />
+                </Card>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Technologies */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="mb-12"
+          >
+            <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
+              <CardContent className="p-8">
+                <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Technologies Used</h2>
+                <div className="flex flex-wrap gap-3">
+                  {project.technology.map((tech, index) => (
+                    <Badge key={index} variant="outline" className="px-4 py-2 text-sm theme-text">
+                      {tech}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Project Details */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            {/* Challenge */}
+            {project.challenge && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition h-full`}>
+                  <CardContent className="p-8">
+                    <h3 className="text-2xl font-bold theme-text mb-4 theme-transition">The Challenge</h3>
+                    <p className="theme-text opacity-80 theme-transition leading-relaxed">{project.challenge}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Solution */}
+            {project.solution && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition h-full`}>
+                  <CardContent className="p-8">
+                    <h3 className="text-2xl font-bold theme-text mb-4 theme-transition">Our Solution</h3>
+                    <p className="theme-text opacity-80 theme-transition leading-relaxed">{project.solution}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent theme-gradient-text theme-transition mb-4">
-            {project.title}
-          </h1>
-          <p className="text-xl theme-text opacity-80 max-w-3xl theme-transition">{project.description}</p>
-        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-12">
-            {/* Image Carousel */}
+          {/* Features */}
+          {project.features && project.features.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <ImageCarousel images={project.images} projectTitle={project.title} />
-            </motion.div>
-
-            {/* Project Overview */}
-            {(project.challenge || project.solution) && (
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
-                  <CardContent className="p-8">
-                    <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Project Overview</h2>
-                    <div className="space-y-6">
-                      {project.challenge && (
-                        <div>
-                          <h3 className="text-lg font-semibold theme-text mb-2 theme-transition">Challenge</h3>
-                          <p className="theme-text opacity-80 theme-transition">{project.challenge}</p>
-                        </div>
-                      )}
-                      {project.solution && (
-                        <div>
-                          <h3 className="text-lg font-semibold theme-text mb-2 theme-transition">Solution</h3>
-                          <p className="theme-text opacity-80 theme-transition">{project.solution}</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.section>
-            )}
-
-            {/* Key Features */}
-            {project.features && project.features.length > 0 && project.features[0] && (
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
-                  <CardContent className="p-8">
-                    <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Key Features</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {project.features
-                        .filter((feature) => feature.trim())
-                        .map((feature, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
-                            className="flex items-center space-x-3"
-                          >
-                            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
-                            <span className="theme-text theme-transition">{feature}</span>
-                          </motion.div>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.section>
-            )}
-
-            {/* Results */}
-            {project.results && project.results.length > 0 && project.results[0] && (
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
-                <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
-                  <CardContent className="p-8">
-                    <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Results & Impact</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {project.results
-                        .filter((result) => result.trim())
-                        .map((result, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
-                            className="text-center p-4 rounded-lg bg-primary/10"
-                          >
-                            <div className="text-2xl font-bold text-primary mb-2">
-                              {result.match(/\d+%?/)?.[0] || "✓"}
-                            </div>
-                            <p className="theme-text text-sm theme-transition">{result.replace(/\d+%?\s*/, "")}</p>
-                          </motion.div>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.section>
-            )}
-
-            {/* Technology Stack */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="mb-12"
             >
               <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
                 <CardContent className="p-8">
-                  <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Technology Stack</h2>
-                  <div className="flex flex-wrap gap-3">
-                    {project.technology.map((tech, index) => (
-                      <motion.span
-                        key={tech}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, delay: 0.6 + index * 0.1 }}
-                        className="px-4 py-2 bg-gradient-to-r theme-gradient text-white rounded-full text-sm font-medium shadow-lg"
-                      >
-                        {tech}
-                      </motion.span>
+                  <h3 className="text-2xl font-bold theme-text mb-6 theme-transition">Key Features</h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {project.features.map((feature, index) => (
+                      <div key={index} className="flex items-center theme-text theme-transition">
+                        <CheckCircle className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
+                        {feature}
+                      </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
-            </motion.section>
+            </motion.div>
+          )}
 
-            {/* Client Testimonial */}
-            {project.testimonial && project.testimonial.quote && (
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-              >
-                <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
-                  <CardContent className="p-8">
-                    <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Client Feedback</h2>
-                    <div className="space-y-4">
-                      <div className="flex mb-4">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                      <blockquote className="text-lg theme-text italic mb-4 theme-transition">
-                        "{project.testimonial.quote}"
-                      </blockquote>
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-r theme-gradient rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold">{project.testimonial.author.charAt(0)}</span>
-                        </div>
-                        <div>
-                          <div className="font-semibold theme-text theme-transition">{project.testimonial.author}</div>
-                          <div className="text-sm theme-text opacity-70 theme-transition">
-                            {project.testimonial.position} at {project.testimonial.company}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.section>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-8">
-            {/* Project Info */}
+          {/* Results */}
+          {project.results && project.results.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="mb-12"
             >
               <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold theme-text mb-4 theme-transition">Project Details</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <Calendar className="w-5 h-5 text-primary" />
-                      <div>
-                        <div className="text-sm theme-text opacity-70 theme-transition">Duration</div>
-                        <div className="font-medium theme-text theme-transition">{project.duration}</div>
+                <CardContent className="p-8">
+                  <h3 className="text-2xl font-bold theme-text mb-6 theme-transition">Results & Impact</h3>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {project.results.map((result, index) => (
+                      <div key={index} className="text-center">
+                        <div className="text-3xl font-bold text-primary mb-2">{result}</div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Users className="w-5 h-5 text-primary" />
-                      <div>
-                        <div className="text-sm theme-text opacity-70 theme-transition">Team Size</div>
-                        <div className="font-medium theme-text theme-transition">{project.team_size} members</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Building className="w-5 h-5 text-primary" />
-                      <div>
-                        <div className="text-sm theme-text opacity-70 theme-transition">Client Type</div>
-                        <div className="font-medium theme-text theme-transition">{project.client_type}</div>
-                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Image Gallery */}
+          {project.images && project.images.length > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+              className="mb-12"
+            >
+              <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
+                <CardContent className="p-8">
+                  <h3 className="text-2xl font-bold theme-text mb-6 theme-transition">Project Gallery</h3>
+                  <ImageCarousel images={project.images} />
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Testimonial */}
+          {project.testimonial && project.testimonial.quote && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="mb-12"
+            >
+              <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
+                <CardContent className="p-8 text-center">
+                  <div className="text-4xl text-primary mb-4">"</div>
+                  <blockquote className="text-xl theme-text opacity-90 mb-6 theme-transition italic">
+                    {project.testimonial.quote}
+                  </blockquote>
+                  <div className="theme-text theme-transition">
+                    <div className="font-semibold">{project.testimonial.author}</div>
+                    <div className="opacity-70">
+                      {project.testimonial.position} at {project.testimonial.company}
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
+          )}
 
-            {/* Action Buttons */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="space-y-3"
-            >
-              {project.live_url && (
-                <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white">
-                  <a href={project.live_url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View Live Project
-                  </a>
-                </Button>
-              )}
-              {project.github_url && (
-                <Button asChild variant="outline" className="w-full bg-transparent">
-                  <a href={project.github_url} target="_blank" rel="noopener noreferrer">
-                    <Github className="w-4 h-4 mr-2" />
-                    View Source Code
-                  </a>
-                </Button>
-              )}
-              <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href="/contact">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Discuss Your Project
-                </Link>
-              </Button>
-            </motion.div>
-
-            {/* CTA section */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold theme-text mb-4 theme-transition">Ready to Start Your Project?</h3>
-                  <p className="text-sm theme-text opacity-70 mb-4 theme-transition">
-                    Let's discuss how we can help bring your unique vision to life with our expertise and dedication to
-                    excellence.
-                  </p>
-                  <Button asChild className="w-full">
-                    <Link href="/contact">Get a Free Consultation</Link>
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
+          >
+            <Card className={`${getCardBgClass()} backdrop-blur-md border-0 shadow-lg theme-transition`}>
+              <CardContent className="p-12 text-center">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent theme-gradient-text theme-transition">
+                  Interested in Similar Results?
+                </h2>
+                <p className="text-lg theme-text opacity-80 mb-8 max-w-2xl mx-auto theme-transition">
+                  Let's discuss how we can help you achieve your project goals with our expertise
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-4" asChild>
+                    <Link href="/contact">Start Your Project</Link>
                   </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+                  <Button size="lg" variant="outline" className="px-8 py-4 bg-transparent" asChild>
+                    <Link href="/portfolio">View More Projects</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     </div>

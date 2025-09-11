@@ -2,15 +2,18 @@ import type { Metadata } from "next"
 import { ContactPageClient } from "./ContactPageClient"
 
 export const metadata: Metadata = {
-  title: "Contact Us - RapidXSolution",
-  description:
-    "Get in touch with RapidXSolution for your digital transformation needs. We're here to help bring your vision to life.",
-  keywords: "contact, get in touch, consultation, digital transformation, web development",
+  title: "Contact Us - Get In Touch",
+  description: "Ready to start your project? Get in touch with RapidXSolution for a free consultation and quote.",
+  keywords: "contact, get quote, consultation, project inquiry, web development services",
   openGraph: {
-    title: "Contact Us - RapidXSolution",
-    description:
-      "Get in touch with RapidXSolution for your digital transformation needs. We're here to help bring your vision to life.",
+    title: "Contact Us - Get In Touch | RapidXSolution",
+    description: "Ready to start your project? Get in touch with RapidXSolution for a free consultation and quote.",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Contact Us - Get In Touch | RapidXSolution",
+    description: "Ready to start your project? Get in touch with RapidXSolution for a free consultation and quote.",
   },
 }
 
