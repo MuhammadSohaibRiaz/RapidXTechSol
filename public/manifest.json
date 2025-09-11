@@ -1,0 +1,27 @@
+{
+  "name": "RapidXTech - Software Development Company",
+  "short_name": "RapidXTech",
+  "description": "Innovative software development company specializing in web development, mobile apps, and enterprise solutions.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["business", "productivity", "technology"],
+  "lang": "en-US",
+  "dir": "ltr"
+}
