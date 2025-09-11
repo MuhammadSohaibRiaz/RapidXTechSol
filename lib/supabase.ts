@@ -116,79 +116,6 @@ export interface Database {
           seo_description?: string | null
         }
       }
-      client_reviews: {
-        Row: {
-          id: number
-          client_name: string
-          client_position: string
-          client_company: string
-          client_image: string | null
-          review_text: string
-          rating: number
-          project_category: string | null
-          is_featured: boolean
-          is_published: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          client_name: string
-          client_position: string
-          client_company: string
-          client_image?: string | null
-          review_text: string
-          rating?: number
-          project_category?: string | null
-          is_featured?: boolean
-          is_published?: boolean
-        }
-        Update: {
-          client_name?: string
-          client_position?: string
-          client_company?: string
-          client_image?: string | null
-          review_text?: string
-          rating?: number
-          project_category?: string | null
-          is_featured?: boolean
-          is_published?: boolean
-        }
-      }
-      trusted_partners: {
-        Row: {
-          id: number
-          company_name: string
-          company_logo: string
-          company_website: string | null
-          partnership_type: string | null
-          description: string | null
-          is_featured: boolean
-          is_published: boolean
-          display_order: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          company_name: string
-          company_logo: string
-          company_website?: string | null
-          partnership_type?: string | null
-          description?: string | null
-          is_featured?: boolean
-          is_published?: boolean
-          display_order?: number
-        }
-        Update: {
-          company_name?: string
-          company_logo?: string
-          company_website?: string | null
-          partnership_type?: string | null
-          description?: string | null
-          is_featured?: boolean
-          is_published?: boolean
-          display_order?: number
-        }
-      }
     }
   }
 }
@@ -209,5 +136,3 @@ export interface ProjectTestimonial {
 
 export type ProjectDetail = Database["public"]["Tables"]["projects"]["Row"]
 export type BlogPost = Database["public"]["Tables"]["blog_posts"]["Row"]
-export type ClientReview = Database["public"]["Tables"]["client_reviews"]["Row"]
-export type TrustedPartner = Database["public"]["Tables"]["trusted_partners"]["Row"]
