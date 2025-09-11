@@ -2,13 +2,12 @@
 
 import type React from "react"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { useThemeContext } from "@/context/theme-context"
-import { ThemeSwitcher } from "@/components/theme-switcher"
 import { Button } from "@/components/ui/button"
-import { LogOut, Settings, Home } from "lucide-react"
-import { clearAdminSession } from "@/lib/auth"
-import Link from "next/link"
+import { LogOut, Timer, User, Shield } from "lucide-react"
+import { useAdminAuth } from "@/lib/auth"
+import { useThemeContext } from "@/context/theme-context"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -16,52 +15,81 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { mode, color } = useThemeContext()
+  const { logout, getRemainingSessionTime } = useAdminAuth()
 
-  const handleLogout = () => {
-    clearAdminSession()
-    window.location.href = "/admin"
-  }
+  const [sessionTime, setSessionTime] = useState(0)
+
+  // Update session timer
+  useEffect(() => {
+    const updateTimer = () => {
+      const remaining = getRemainingSessionTime()
+      setSessionTime(Math.ceil(remaining / 1000))
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+    return () => clearInterval(interval)
+  }, [getRemainingSessionTime])
 
   const getHeaderBgClass = () => {
     if (mode === "dark" || color === "black") {
-      return "bg-gray-900/40"
+      return "bg-gray-900/60"
     } else {
-      return "bg-white/40"
+      return "bg-white/60"
     }
+  }
+
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to logout?")) {
+      logout()
+    }
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
   return (
     <div className="min-h-screen theme-bg theme-transition">
       {/* Admin Header */}
       <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`${getHeaderBgClass()} backdrop-blur-md border-b border-gray-300 dark:border-gray-600 theme-transition sticky top-0 z-50`}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className={`${getHeaderBgClass()} backdrop-blur-md border-b border-gray-300 dark:border-gray-700 sticky top-0 z-50 theme-transition`}
       >
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                <Home className="w-5 h-5 theme-text" />
-                <span className="font-bold theme-text theme-transition">RapidXSolution</span>
-              </Link>
-              <div className="hidden md:block w-px h-6 bg-gray-300 dark:bg-gray-600" />
+            {/* Admin Badge */}
+            <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
-                <Settings className="w-4 h-4 text-primary" />
-                <span className="font-medium theme-text theme-transition">Admin Dashboard</span>
+                <Shield className="w-5 h-5 text-primary" />
+                <span className="font-semibold theme-text theme-transition">Admin Panel</span>
+              </div>
+              <div className="hidden md:flex items-center space-x-2 px-3 py-1 bg-primary/20 rounded-full">
+                <User className="w-3 h-3 text-primary" />
+                <span className="text-xs text-primary font-medium">Administrator</span>
               </div>
             </div>
 
+            {/* Session Info & Logout */}
             <div className="flex items-center space-x-4">
-              <ThemeSwitcher />
+              {/* Session Timer */}
+              <div className="hidden sm:flex items-center space-x-2 px-3 py-1 bg-green-500/20 rounded-full">
+                <Timer className="w-3 h-3 text-green-500" />
+                <span className="text-xs text-green-500 font-medium">{formatTime(sessionTime)}</span>
+              </div>
+
+              {/* Logout Button */}
               <Button
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className="bg-transparent theme-text border-gray-300 dark:border-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:border-red-600 dark:hover:text-red-400"
+                className="flex items-center space-x-2 hover:bg-red-500/20 hover:text-red-500 hover:border-red-500/50 transition-colors bg-transparent"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
               </Button>
             </div>
           </div>
@@ -69,22 +97,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </motion.header>
 
       {/* Main Content */}
-      <main className="relative">{children}</main>
+      <main className="theme-transition">{children}</main>
 
-      {/* Admin Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className={`${getHeaderBgClass()} backdrop-blur-md border-t border-gray-300 dark:border-gray-600 theme-transition mt-auto`}
-      >
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between text-sm theme-text opacity-60 theme-transition">
-            <p>© 2024 RapidXSolution Admin Panel</p>
-            <p>Secure Admin Access</p>
-          </div>
-        </div>
-      </motion.footer>
+      {/* Session Warning */}
+      {sessionTime <= 300 &&
+        sessionTime > 0 && ( // 5 minutes warning
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed bottom-4 right-4 bg-yellow-500/90 text-black px-4 py-2 rounded-lg shadow-lg z-50"
+          >
+            <div className="flex items-center space-x-2">
+              <Timer className="w-4 h-4" />
+              <span className="text-sm font-medium">Session expires in {formatTime(sessionTime)}</span>
+            </div>
+          </motion.div>
+        )}
     </div>
   )
 }

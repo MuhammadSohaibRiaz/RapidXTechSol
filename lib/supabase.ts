@@ -6,82 +6,133 @@ const supabaseAnonKey =
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Type definitions
-export interface ProjectDetail {
-  id: number
-  title: string
-  category: string
-  technology: string[]
-  description: string
-  long_description?: string
-  challenge?: string
-  solution?: string
-  results: string[]
-  features: string[]
-  images: Array<{
-    id: number
-    url: string
-    alt: string
-    caption: string
-  }>
-  duration: string
-  team_size: number
-  client_type: string
-  live_url?: string
-  github_url?: string
-  is_published: boolean
-  testimonial?: {
-    quote: string
-    author: string
-    position: string
-    company: string
+// Database types
+export interface Database {
+  public: {
+    Tables: {
+      projects: {
+        Row: {
+          id: number
+          title: string
+          category: string
+          technology: string[]
+          description: string
+          long_description: string | null
+          challenge: string | null
+          solution: string | null
+          results: string[]
+          features: string[]
+          images: ProjectImage[]
+          duration: string | null
+          team_size: number
+          client_type: string | null
+          live_url: string | null
+          github_url: string | null
+          is_published: boolean
+          created_at: string
+          updated_at: string
+          testimonial: ProjectTestimonial | null
+        }
+        Insert: {
+          title: string
+          category: string
+          technology: string[]
+          description: string
+          long_description?: string | null
+          challenge?: string | null
+          solution?: string | null
+          results?: string[]
+          features?: string[]
+          images?: ProjectImage[]
+          duration?: string | null
+          team_size?: number
+          client_type?: string | null
+          live_url?: string | null
+          github_url?: string | null
+          is_published?: boolean
+          testimonial?: ProjectTestimonial | null
+        }
+        Update: {
+          title?: string
+          category?: string
+          technology?: string[]
+          description?: string
+          long_description?: string | null
+          challenge?: string | null
+          solution?: string | null
+          results?: string[]
+          features?: string[]
+          images?: ProjectImage[]
+          duration?: string | null
+          team_size?: number
+          client_type?: string | null
+          live_url?: string | null
+          github_url?: string | null
+          is_published?: boolean
+          testimonial?: ProjectTestimonial | null
+        }
+      }
+      blog_posts: {
+        Row: {
+          id: number
+          title: string
+          slug: string
+          excerpt: string
+          content: string
+          image: string | null
+          tags: string[]
+          author: string
+          date: string
+          is_published: boolean
+          created_at: string
+          updated_at: string
+          seo_title: string | null
+          seo_description: string | null
+        }
+        Insert: {
+          title: string
+          slug: string
+          excerpt: string
+          content: string
+          image?: string | null
+          tags?: string[]
+          author?: string
+          date?: string
+          is_published?: boolean
+          seo_title?: string | null
+          seo_description?: string | null
+        }
+        Update: {
+          title?: string
+          slug?: string
+          excerpt?: string
+          content?: string
+          image?: string | null
+          tags?: string[]
+          author?: string
+          date?: string
+          is_published?: boolean
+          seo_title?: string | null
+          seo_description?: string | null
+        }
+      }
+    }
   }
-  created_at: string
-  updated_at: string
 }
 
-export interface BlogPost {
+export interface ProjectImage {
   id: number
-  title: string
-  slug: string
-  excerpt: string
-  content: string
-  image?: string
-  tags: string[]
+  url: string
+  alt: string
+  caption?: string
+}
+
+export interface ProjectTestimonial {
+  quote: string
   author: string
-  date: string
-  is_published: boolean
-  seo_title?: string
-  seo_description?: string
-  created_at: string
-  updated_at: string
+  position: string
+  company: string
 }
 
-export interface ClientReview {
-  id: number
-  client_name: string
-  client_position: string
-  client_company: string
-  client_image?: string
-  review_text: string
-  rating: number
-  project_category?: string
-  is_featured: boolean
-  is_published: boolean
-  created_at: string
-  updated_at: string
-}
-
-export interface TrustedPartner {
-  id: number
-  company_name: string
-  company_logo: string
-  company_website?: string
-  partnership_type: string
-  description?: string
-  is_featured: boolean
-  is_published: boolean
-  display_order: number
-  created_at: string
-  updated_at: string
-}
+export type ProjectDetail = Database["public"]["Tables"]["projects"]["Row"]
+export type BlogPost = Database["public"]["Tables"]["blog_posts"]["Row"]

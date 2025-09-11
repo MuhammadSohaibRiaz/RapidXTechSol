@@ -23,8 +23,6 @@ const STORAGE_KEYS = {
   SESSION: "rapidx_admin_session",
 }
 
-const ADMIN_PIN = "2024" // Change this to your desired PIN
-
 export function useAdminAuth() {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
@@ -109,7 +107,7 @@ export function useAdminAuth() {
     }
 
     // Validate PIN
-    if (pin === ADMIN_PIN) {
+    if (pin === ADMIN_CONFIG.PIN) {
       const newState = {
         isAuthenticated: true,
         attempts: 0,
@@ -176,47 +174,4 @@ export function useAdminAuth() {
     getRemainingSessionTime,
     getLockoutRemainingTime,
   }
-}
-
-export function authenticateAdmin(pin: string): Promise<{ success: boolean; error?: string }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (pin === ADMIN_PIN) {
-        // Store session in localStorage
-        localStorage.setItem("admin_session", "authenticated")
-        localStorage.setItem("admin_session_time", Date.now().toString())
-        resolve({ success: true })
-      } else {
-        resolve({ success: false, error: "Invalid PIN" })
-      }
-    }, 1000) // Simulate network delay
-  })
-}
-
-export function isAdminAuthenticated(): boolean {
-  if (typeof window === "undefined") return false
-
-  const session = localStorage.getItem("admin_session")
-  const sessionTime = localStorage.getItem("admin_session_time")
-
-  if (!session || !sessionTime) return false
-
-  // Check if session is expired (24 hours)
-  const now = Date.now()
-  const sessionStart = Number.parseInt(sessionTime)
-  const twentyFourHours = 24 * 60 * 60 * 1000
-
-  if (now - sessionStart > twentyFourHours) {
-    clearAdminSession()
-    return false
-  }
-
-  return session === "authenticated"
-}
-
-export function clearAdminSession(): void {
-  if (typeof window === "undefined") return
-
-  localStorage.removeItem("admin_session")
-  localStorage.removeItem("admin_session_time")
 }
