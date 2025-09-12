@@ -47,9 +47,33 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
   const getCardBgClass = () => {
     if (mode === "dark" || color === "black") {
-      return "bg-gray-900/40"
+      return "bg-gray-800/80 border border-gray-700/50"
     } else {
-      return "bg-white/40"
+      return "bg-white/90 border border-gray-200/50"
+    }
+  }
+
+  const getTextClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "text-gray-100"
+    } else {
+      return "text-gray-900"
+    }
+  }
+
+  const getSecondaryTextClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "text-gray-300"
+    } else {
+      return "text-gray-600"
+    }
+  }
+
+  const getMutedTextClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "text-gray-400"
+    } else {
+      return "text-gray-500"
     }
   }
 
@@ -58,7 +82,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
         <motion.div
-          className="absolute inset-0 theme-glow blur-3xl theme-transition"
+          className="absolute inset-0 theme-glow blur-3xl theme-transition opacity-30"
           animate={{
             x: ["0%", "100%", "0%"],
             y: ["0%", "50%", "0%"],
@@ -80,7 +104,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
           className="mb-8"
         >
           <Link href="/portfolio">
-            <Button variant="ghost" className="theme-text hover:opacity-80 theme-transition">
+            <Button variant="ghost" className={`${getTextClass()} hover:bg-primary/10 theme-transition`}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Portfolio
             </Button>
@@ -95,11 +119,11 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
           className="mb-12"
         >
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="px-3 py-1 bg-secondary/20 theme-text rounded-full text-sm font-medium theme-transition">
+            <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
               {project.category}
             </span>
             {project.technology.slice(0, 3).map((tech) => (
-              <span key={tech} className="px-3 py-1 bg-secondary/20 theme-text rounded-full text-sm theme-transition">
+              <span key={tech} className="px-3 py-1 bg-secondary/20 text-secondary rounded-full text-sm">
                 {tech}
               </span>
             ))}
@@ -107,7 +131,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
           <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent theme-gradient-text theme-transition mb-4">
             {project.title}
           </h1>
-          <p className="text-xl theme-text opacity-80 max-w-3xl theme-transition">{project.longDescription}</p>
+          <p className={`text-xl ${getSecondaryTextClass()} max-w-3xl theme-transition`}>{project.longDescription}</p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -130,18 +154,22 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
               >
-                <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Project Overview</h2>
+                <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Project Overview</h2>
                 <div className="space-y-6">
                   {project.challenge && (
                     <div>
-                      <h3 className="text-lg font-semibold theme-text mb-2 theme-transition">Challenge</h3>
-                      <p className="theme-text opacity-80 theme-transition">{project.challenge}</p>
+                      <h3 className={`text-lg font-semibold ${getTextClass()} mb-2 theme-transition`}>Challenge</h3>
+                      <p className={`${getSecondaryTextClass()} theme-transition leading-relaxed`}>
+                        {project.challenge}
+                      </p>
                     </div>
                   )}
                   {project.solution && (
                     <div>
-                      <h3 className="text-lg font-semibold theme-text mb-2 theme-transition">Solution</h3>
-                      <p className="theme-text opacity-80 theme-transition">{project.solution}</p>
+                      <h3 className={`text-lg font-semibold ${getTextClass()} mb-2 theme-transition`}>Solution</h3>
+                      <p className={`${getSecondaryTextClass()} theme-transition leading-relaxed`}>
+                        {project.solution}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -156,7 +184,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
               >
-                <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Key Features</h2>
+                <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Key Features</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {project.features
                     .filter((feature) => feature.trim())
@@ -169,7 +197,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                         className="flex items-center space-x-3"
                       >
                         <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
-                        <span className="theme-text theme-transition">{feature}</span>
+                        <span className={`${getTextClass()} theme-transition`}>{feature}</span>
                       </motion.div>
                     ))}
                 </div>
@@ -184,7 +212,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 transition={{ duration: 0.5, delay: 0.5 }}
                 className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
               >
-                <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Results & Impact</h2>
+                <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Results & Impact</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {project.results
                     .filter((result) => result.trim())
@@ -194,10 +222,12 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
-                        className="text-center p-4 rounded-lg bg-primary/10"
+                        className="text-center p-4 rounded-lg bg-primary/10 border border-primary/20"
                       >
                         <div className="text-2xl font-bold text-primary mb-2">{result.match(/\d+%?/)?.[0] || "✓"}</div>
-                        <p className="theme-text text-sm theme-transition">{result.replace(/\d+%?\s*/, "")}</p>
+                        <p className={`${getSecondaryTextClass()} text-sm theme-transition`}>
+                          {result.replace(/\d+%?\s*/, "")}
+                        </p>
                       </motion.div>
                     ))}
                 </div>
@@ -211,7 +241,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               transition={{ duration: 0.5, delay: 0.6 }}
               className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
             >
-              <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Technology Stack</h2>
+              <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Technology Stack</h2>
               <div className="flex flex-wrap gap-3">
                 {project.technology.map((tech, index) => (
                   <motion.span
@@ -219,7 +249,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: 0.6 + index * 0.1 }}
-                    className="px-4 py-2 bg-gradient-to-r theme-gradient-text text-white rounded-full text-sm font-medium shadow-lg"
+                    className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-full text-sm font-medium shadow-lg"
                   >
                     {tech}
                   </motion.span>
@@ -227,7 +257,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               </div>
             </motion.section>
 
-            {/* Client Testimonial */}
+            {/* Client Testimonial - This is embedded in the project data */}
             {project.testimonial && project.testimonial.quote && (
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
@@ -235,23 +265,25 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 transition={{ duration: 0.5, delay: 0.7 }}
                 className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
               >
-                <h2 className="text-2xl font-bold theme-text mb-6 theme-transition">Client Feedback</h2>
+                <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Client Feedback</h2>
                 <div className="space-y-4">
                   <div className="flex mb-4">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <blockquote className="text-lg theme-text italic mb-4 theme-transition">
+                  <blockquote className={`text-lg ${getTextClass()} italic mb-4 theme-transition`}>
                     "{project.testimonial.quote}"
                   </blockquote>
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r theme-gradient-text rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
                       <span className="text-white font-bold">{project.testimonial.author.charAt(0)}</span>
                     </div>
                     <div>
-                      <div className="font-semibold theme-text theme-transition">{project.testimonial.author}</div>
-                      <div className="text-sm theme-text opacity-70 theme-transition">
+                      <div className={`font-semibold ${getTextClass()} theme-transition`}>
+                        {project.testimonial.author}
+                      </div>
+                      <div className={`text-sm ${getMutedTextClass()} theme-transition`}>
                         {project.testimonial.position} at {project.testimonial.company}
                       </div>
                     </div>
@@ -270,27 +302,27 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               transition={{ duration: 0.5, delay: 0.3 }}
               className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 shadow-lg theme-transition`}
             >
-              <h3 className="text-xl font-bold theme-text mb-4 theme-transition">Project Details</h3>
+              <h3 className={`text-xl font-bold ${getTextClass()} mb-4 theme-transition`}>Project Details</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Calendar className="w-5 h-5 text-primary" />
                   <div>
-                    <div className="text-sm theme-text opacity-70 theme-transition">Duration</div>
-                    <div className="font-medium theme-text theme-transition">{project.duration}</div>
+                    <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Duration</div>
+                    <div className={`font-medium ${getTextClass()} theme-transition`}>{project.duration}</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Users className="w-5 h-5 text-primary" />
                   <div>
-                    <div className="text-sm theme-text opacity-70 theme-transition">Team Size</div>
-                    <div className="font-medium theme-text theme-transition">{project.teamSize} members</div>
+                    <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Team Size</div>
+                    <div className={`font-medium ${getTextClass()} theme-transition`}>{project.teamSize} members</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Building className="w-5 h-5 text-primary" />
                   <div>
-                    <div className="text-sm theme-text opacity-70 theme-transition">Client Type</div>
-                    <div className="font-medium theme-text theme-transition">{project.clientType}</div>
+                    <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Client Type</div>
+                    <div className={`font-medium ${getTextClass()} theme-transition`}>{project.clientType}</div>
                   </div>
                 </div>
               </div>
@@ -312,14 +344,22 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 </Button>
               )}
               {project.githubUrl && (
-                <Button asChild variant="outline" className="w-full bg-transparent">
+                <Button
+                  asChild
+                  variant="outline"
+                  className={`w-full ${getCardBgClass()} ${getTextClass()} border-primary/20 hover:bg-primary/10`}
+                >
                   <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
                     <Github className="w-4 h-4 mr-2" />
                     View Source Code
                   </a>
                 </Button>
               )}
-              <Button asChild variant="outline" className="w-full bg-transparent">
+              <Button
+                asChild
+                variant="outline"
+                className={`w-full ${getCardBgClass()} ${getTextClass()} border-primary/20 hover:bg-primary/10`}
+              >
                 <Link href="/contact">
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Discuss Your Project
@@ -327,19 +367,21 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               </Button>
             </motion.div>
 
-            {/* Updated CTA section */}
+            {/* CTA section */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
               className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 shadow-lg theme-transition`}
             >
-              <h3 className="text-xl font-bold theme-text mb-4 theme-transition">Ready to Start Your Project?</h3>
-              <p className="text-sm theme-text opacity-70 mb-4 theme-transition">
+              <h3 className={`text-xl font-bold ${getTextClass()} mb-4 theme-transition`}>
+                Ready to Start Your Project?
+              </h3>
+              <p className={`text-sm ${getMutedTextClass()} mb-4 theme-transition`}>
                 Let's discuss how we can help bring your unique vision to life with our expertise and dedication to
                 excellence.
               </p>
-              <Button asChild className="w-full">
+              <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white">
                 <Link href="/contact">Get a Free Consultation</Link>
               </Button>
             </motion.div>

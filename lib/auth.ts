@@ -2,164 +2,167 @@
 
 import { useState, useEffect } from "react"
 
-const ADMIN_PIN = "2024"
 const ADMIN_PASSWORD = "rapidx2024admin"
-const SESSION_KEY = "admin_session"
-const FAILED_ATTEMPTS_KEY = "admin_failed_attempts"
-const LOCKOUT_KEY = "admin_lockout"
-const SESSION_DURATION = 30 * 60 * 1000 // 30 minutes
-const MAX_ATTEMPTS = 5
+const MAX_ATTEMPTS = 3
 const LOCKOUT_DURATION = 15 * 60 * 1000 // 15 minutes
+const SESSION_DURATION = 30 * 60 * 1000 // 30 minutes
 
-interface AdminSession {
-  authenticated: boolean
-  timestamp: number
+interface AuthState {
+  isAuthenticated: boolean
+  failedAttempts: number
+  lockoutUntil: number | null
+  sessionExpiry: number | null
 }
 
 export function useAdminAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authState, setAuthState] = useState<AuthState>({
+    isAuthenticated: false,
+    failedAttempts: 0,
+    lockoutUntil: null,
+    sessionExpiry: null,
+  })
   const [isLoading, setIsLoading] = useState(true)
-  const [failedAttempts, setFailedAttempts] = useState(0)
-  const [isLockedOut, setIsLockedOut] = useState(false)
-  const [lockoutTimeRemaining, setLockoutTimeRemaining] = useState(0)
+  const [sessionTimeRemaining, setSessionTimeRemaining] = useState(0)
 
+  // Load auth state from localStorage
   useEffect(() => {
-    checkAuthStatus()
-  }, [])
+    const savedState = localStorage.getItem("adminAuthState")
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState)
+        const now = Date.now()
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (isLockedOut && lockoutTimeRemaining > 0) {
-      interval = setInterval(() => {
-        setLockoutTimeRemaining((prev) => {
-          if (prev <= 1000) {
-            setIsLockedOut(false)
-            localStorage.removeItem(LOCKOUT_KEY)
-            localStorage.removeItem(FAILED_ATTEMPTS_KEY)
-            setFailedAttempts(0)
-            return 0
-          }
-          return prev - 1000
-        })
-      }, 1000)
-    }
-    return () => clearInterval(interval)
-  }, [isLockedOut, lockoutTimeRemaining])
-
-  const checkAuthStatus = () => {
-    try {
-      // Check lockout status
-      const lockoutData = localStorage.getItem(LOCKOUT_KEY)
-      if (lockoutData) {
-        const lockoutTime = Number.parseInt(lockoutData)
-        const timeRemaining = lockoutTime - Date.now()
-        if (timeRemaining > 0) {
-          setIsLockedOut(true)
-          setLockoutTimeRemaining(timeRemaining)
-          setIsLoading(false)
-          return
+        // Check if session is still valid
+        if (parsed.sessionExpiry && now < parsed.sessionExpiry) {
+          setAuthState({
+            ...parsed,
+            isAuthenticated: true,
+          })
         } else {
-          localStorage.removeItem(LOCKOUT_KEY)
-          localStorage.removeItem(FAILED_ATTEMPTS_KEY)
+          // Session expired
+          setAuthState({
+            isAuthenticated: false,
+            failedAttempts: parsed.failedAttempts || 0,
+            lockoutUntil: parsed.lockoutUntil,
+            sessionExpiry: null,
+          })
         }
+      } catch (error) {
+        console.error("Error parsing auth state:", error)
       }
-
-      // Check failed attempts
-      const attempts = localStorage.getItem(FAILED_ATTEMPTS_KEY)
-      if (attempts) {
-        setFailedAttempts(Number.parseInt(attempts))
-      }
-
-      // Check session
-      const sessionData = localStorage.getItem(SESSION_KEY)
-      if (sessionData) {
-        const session: AdminSession = JSON.parse(sessionData)
-        const isExpired = Date.now() - session.timestamp > SESSION_DURATION
-
-        if (session.authenticated && !isExpired) {
-          setIsAuthenticated(true)
-        } else {
-          localStorage.removeItem(SESSION_KEY)
-        }
-      }
-
-      // Check if user is already authenticated
-      const authStatus = localStorage.getItem("admin_authenticated")
-      if (authStatus === "true") {
-        setIsAuthenticated(true)
-      }
-    } catch (error) {
-      console.error("Error checking auth status:", error)
-      localStorage.removeItem(SESSION_KEY)
     }
     setIsLoading(false)
-  }
+  }, [])
 
-  const authenticate = (pin: string): boolean => {
-    if (isLockedOut) {
-      return false
+  // Save auth state to localStorage
+  useEffect(() => {
+    localStorage.setItem("adminAuthState", JSON.stringify(authState))
+  }, [authState])
+
+  // Session timer
+  useEffect(() => {
+    if (authState.isAuthenticated && authState.sessionExpiry) {
+      const interval = setInterval(() => {
+        const now = Date.now()
+        const remaining = authState.sessionExpiry! - now
+
+        if (remaining <= 0) {
+          // Session expired
+          setAuthState((prev) => ({
+            ...prev,
+            isAuthenticated: false,
+            sessionExpiry: null,
+          }))
+          setSessionTimeRemaining(0)
+        } else {
+          setSessionTimeRemaining(remaining)
+        }
+      }, 1000)
+
+      return () => clearInterval(interval)
     }
-
-    if (pin === ADMIN_PIN) {
-      const session: AdminSession = {
-        authenticated: true,
-        timestamp: Date.now(),
-      }
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-      localStorage.removeItem(FAILED_ATTEMPTS_KEY)
-      setIsAuthenticated(true)
-      setFailedAttempts(0)
-      return true
-    } else {
-      const newAttempts = failedAttempts + 1
-      setFailedAttempts(newAttempts)
-      localStorage.setItem(FAILED_ATTEMPTS_KEY, newAttempts.toString())
-
-      if (newAttempts >= MAX_ATTEMPTS) {
-        const lockoutUntil = Date.now() + LOCKOUT_DURATION
-        localStorage.setItem(LOCKOUT_KEY, lockoutUntil.toString())
-        setIsLockedOut(true)
-        setLockoutTimeRemaining(LOCKOUT_DURATION)
-      }
-      return false
-    }
-  }
+  }, [authState.isAuthenticated, authState.sessionExpiry])
 
   const login = (password: string): boolean => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true)
-      localStorage.setItem("admin_authenticated", "true")
-      return true
+    const now = Date.now()
+
+    // Check if locked out
+    if (authState.lockoutUntil && now < authState.lockoutUntil) {
+      return false
     }
-    return false
+
+    if (password === ADMIN_PASSWORD) {
+      // Successful login
+      setAuthState({
+        isAuthenticated: true,
+        failedAttempts: 0,
+        lockoutUntil: null,
+        sessionExpiry: now + SESSION_DURATION,
+      })
+      return true
+    } else {
+      // Failed login
+      const newFailedAttempts = authState.failedAttempts + 1
+      const shouldLockout = newFailedAttempts >= MAX_ATTEMPTS
+
+      setAuthState((prev) => ({
+        ...prev,
+        isAuthenticated: false,
+        failedAttempts: newFailedAttempts,
+        lockoutUntil: shouldLockout ? now + LOCKOUT_DURATION : null,
+        sessionExpiry: null,
+      }))
+      return false
+    }
   }
 
   const logout = () => {
-    localStorage.removeItem(SESSION_KEY)
-    localStorage.removeItem("admin_authenticated")
-    setIsAuthenticated(false)
+    setAuthState((prev) => ({
+      ...prev,
+      isAuthenticated: false,
+      sessionExpiry: null,
+    }))
   }
 
-  const getRemainingAttempts = () => {
-    return Math.max(0, MAX_ATTEMPTS - failedAttempts)
+  const extendSession = () => {
+    if (authState.isAuthenticated) {
+      setAuthState((prev) => ({
+        ...prev,
+        sessionExpiry: Date.now() + SESSION_DURATION,
+      }))
+    }
   }
 
-  const formatLockoutTime = (ms: number) => {
-    const minutes = Math.floor(ms / 60000)
-    const seconds = Math.floor((ms % 60000) / 1000)
+  const getRemainingAttempts = (): number => {
+    return Math.max(0, MAX_ATTEMPTS - authState.failedAttempts)
+  }
+
+  const getLockoutTimeRemaining = (): number => {
+    if (!authState.lockoutUntil) return 0
+    return Math.max(0, authState.lockoutUntil - Date.now())
+  }
+
+  const formatTime = (milliseconds: number): string => {
+    const minutes = Math.floor(milliseconds / 60000)
+    const seconds = Math.floor((milliseconds % 60000) / 1000)
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
+  const isLockedOut = authState.lockoutUntil ? Date.now() < authState.lockoutUntil : false
+  const lockoutTimeRemaining = getLockoutTimeRemaining()
+
   return {
-    isAuthenticated,
+    isAuthenticated: authState.isAuthenticated,
     isLoading,
-    authenticate,
-    login,
-    logout,
-    failedAttempts,
+    failedAttempts: authState.failedAttempts,
     isLockedOut,
     lockoutTimeRemaining,
+    sessionTimeRemaining,
+    login,
+    logout,
+    extendSession,
     getRemainingAttempts,
-    formatLockoutTime,
+    formatLockoutTime: formatTime,
+    formatSessionTime: formatTime,
   }
 }
