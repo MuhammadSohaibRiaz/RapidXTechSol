@@ -2,46 +2,24 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Shield, Lock, Timer, AlertTriangle, CheckCircle } from "lucide-react"
-import { useAdminAuth } from "@/lib/auth"
+import { Lock, AlertTriangle, Shield } from "lucide-react"
 import { useThemeContext } from "@/context/theme-context"
+import { useAdminAuth } from "@/lib/auth"
 
 interface AdminAuthProps {
   onAuthenticated: () => void
 }
 
 export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
-  const { mode, color } = useThemeContext()
-  const { authenticate, attempts, isLocked, getLockoutRemainingTime } = useAdminAuth()
-
   const [pin, setPin] = useState("")
-  const [message, setMessage] = useState("")
-  const [messageType, setMessageType] = useState<"success" | "error" | "">("")
-  const [lockoutTime, setLockoutTime] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Update lockout timer
-  useEffect(() => {
-    if (isLocked) {
-      const updateTimer = () => {
-        const remaining = getLockoutRemainingTime()
-        setLockoutTime(Math.ceil(remaining / 1000))
-
-        if (remaining <= 0) {
-          setMessage("")
-          setMessageType("")
-        }
-      }
-
-      updateTimer()
-      const interval = setInterval(updateTimer, 1000)
-      return () => clearInterval(interval)
-    }
-  }, [isLocked, getLockoutRemainingTime])
+  const [error, setError] = useState("")
+  const { mode, color } = useThemeContext()
+  const { authenticate, failedAttempts, isLockedOut, lockoutTimeRemaining, getRemainingAttempts, formatLockoutTime } =
+    useAdminAuth()
 
   const getCardBgClass = () => {
     if (mode === "dark" || color === "black") {
@@ -51,190 +29,134 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
 
-    if (!pin.trim() || isLocked || isLoading) return
-
-    setIsLoading(true)
-    setMessage("")
-    setMessageType("")
-
-    try {
-      const result = authenticate(pin)
-
-      if (result.success) {
-        setMessage("Access granted! Redirecting...")
-        setMessageType("success")
-        setPin("")
-        setTimeout(() => {
-          onAuthenticated()
-        }, 1000)
-      } else {
-        setMessage(result.message)
-        setMessageType("error")
-        setPin("")
-      }
-    } catch (error) {
-      setMessage("Authentication error. Please try again.")
-      setMessageType("error")
-    } finally {
-      setIsLoading(false)
+    if (isLockedOut) {
+      setError(`Account locked. Try again in ${formatLockoutTime(lockoutTimeRemaining)}`)
+      return
     }
-  }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
+    if (!pin.trim()) {
+      setError("Please enter the admin PIN")
+      return
+    }
+
+    const success = authenticate(pin)
+    if (success) {
+      onAuthenticated()
+    } else {
+      setPin("")
+      if (isLockedOut) {
+        setError(`Too many failed attempts. Account locked for ${formatLockoutTime(lockoutTimeRemaining)}`)
+      } else {
+        const remaining = getRemainingAttempts()
+        setError(`Invalid PIN. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`)
+      }
+    }
   }
 
   return (
     <div className="min-h-screen theme-bg theme-transition relative overflow-hidden flex items-center justify-center">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
-        <motion.div
-          className="absolute inset-0 theme-glow blur-3xl theme-transition"
-          animate={{
-            x: ["0%", "100%", "0%"],
-            y: ["0%", "50%", "0%"],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "linear",
-          }}
-        />
-      </div>
-
-      {/* Auth Form */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        className={`${getCardBgClass()} backdrop-blur-md rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl theme-transition relative z-10`}
+        className="absolute inset-0 theme-glow blur-3xl theme-transition"
+        animate={{
+          x: ["0%", "100%", "0%"],
+          y: ["0%", "50%", "0%"],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: "linear",
+        }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 w-full max-w-md shadow-2xl theme-transition relative z-10`}
       >
-        {/* Header */}
         <div className="text-center mb-8">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-full mb-4"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4"
           >
-            <Shield className="w-8 h-8 text-primary" />
+            {isLockedOut ? <AlertTriangle className="w-8 h-8 text-white" /> : <Shield className="w-8 h-8 text-white" />}
           </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-2xl font-bold bg-clip-text text-transparent theme-gradient-text theme-transition mb-2"
-          >
-            Admin Access
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="theme-text opacity-70 theme-transition"
-          >
-            Enter your PIN to access the dashboard
-          </motion.p>
+          <h1 className="text-2xl font-bold theme-text theme-transition mb-2">Admin Access</h1>
+          <p className="theme-text opacity-70 theme-transition">
+            {isLockedOut ? "Account temporarily locked" : "Enter your PIN to access the admin panel"}
+          </p>
         </div>
 
-        {/* Form */}
-        <motion.form
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
-          {/* PIN Input */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 theme-text opacity-40" />
+        {isLockedOut ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+            <div className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-4 mb-6">
+              <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 mx-auto mb-2" />
+              <p className="text-red-800 dark:text-red-200 text-sm">
+                Too many failed attempts. Please wait {formatLockoutTime(lockoutTimeRemaining)} before trying again.
+              </p>
             </div>
-            <Input
-              type="password"
-              placeholder="Enter PIN"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              disabled={isLocked || isLoading}
-              maxLength={6}
-              className="pl-10 text-center text-lg tracking-wider theme-text bg-transparent border-2"
-              autoComplete="off"
-            />
-          </div>
+          </motion.div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="pin" className="block text-sm font-medium theme-text mb-2 theme-transition">
+                Admin PIN
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 theme-text opacity-50" />
+                <Input
+                  id="pin"
+                  type="password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  placeholder="Enter PIN"
+                  className="pl-10 theme-text bg-transparent border-gray-300 dark:border-gray-600"
+                  maxLength={10}
+                  autoComplete="off"
+                />
+              </div>
+            </div>
 
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            disabled={!pin.trim() || isLocked || isLoading}
-            className="w-full bg-primary hover:bg-primary/90 text-white py-3 text-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
+            {error && (
               <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-              />
-            ) : (
-              "Access Dashboard"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-3"
+              >
+                <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+              </motion.div>
             )}
-          </Button>
-        </motion.form>
 
-        {/* Status Messages */}
-        {message && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`mt-4 p-3 rounded-lg flex items-center space-x-2 ${
-              messageType === "success" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-            }`}
-          >
-            {messageType === "success" ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-            <span className="text-sm">{message}</span>
-          </motion.div>
+            {failedAttempts > 0 && !isLockedOut && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-3"
+              >
+                <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                  {getRemainingAttempts()} attempt{getRemainingAttempts() !== 1 ? "s" : ""} remaining before lockout
+                </p>
+              </motion.div>
+            )}
+
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white" disabled={isLockedOut}>
+              {isLockedOut ? "Account Locked" : "Access Admin Panel"}
+            </Button>
+          </form>
         )}
 
-        {/* Lockout Timer */}
-        {isLocked && lockoutTime > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 p-3 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center space-x-2"
-          >
-            <Timer className="w-4 h-4" />
-            <span className="text-sm">Locked for: {formatTime(lockoutTime)}</span>
-          </motion.div>
-        )}
-
-        {/* Security Info */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="mt-6 pt-4 border-t border-gray-300 dark:border-gray-600"
-        >
-          <div className="flex items-center justify-between text-xs theme-text opacity-50 theme-transition">
-            <span>Attempts: {attempts}/5</span>
-            <span>Session: 30min</span>
-          </div>
-        </motion.div>
-
-        {/* Security Badge */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="absolute -top-2 -right-2 bg-primary text-white px-2 py-1 rounded-full text-xs font-medium"
-        >
-          Secure
-        </motion.div>
+        <div className="mt-6 text-center">
+          <p className="text-xs theme-text opacity-50 theme-transition">
+            Secure admin access • Session expires in 30 minutes
+          </p>
+        </div>
       </motion.div>
     </div>
   )

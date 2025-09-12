@@ -119,37 +119,40 @@ export interface Database {
       client_reviews: {
         Row: {
           id: number
-          client_name: string
-          client_position: string
-          client_company: string
+          client_name: string | null
+          client_position: string | null
+          client_company: string | null
           client_image: string | null
           review_text: string
           rating: number
           project_category: string | null
+          testimonial_type: "identified" | "anonymous"
           is_featured: boolean
           is_published: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
-          client_name: string
-          client_position: string
-          client_company: string
+          client_name?: string | null
+          client_position?: string | null
+          client_company?: string | null
           client_image?: string | null
           review_text: string
           rating?: number
           project_category?: string | null
+          testimonial_type?: "identified" | "anonymous"
           is_featured?: boolean
           is_published?: boolean
         }
         Update: {
-          client_name?: string
-          client_position?: string
-          client_company?: string
+          client_name?: string | null
+          client_position?: string | null
+          client_company?: string | null
           client_image?: string | null
           review_text?: string
           rating?: number
           project_category?: string | null
+          testimonial_type?: "identified" | "anonymous"
           is_featured?: boolean
           is_published?: boolean
         }

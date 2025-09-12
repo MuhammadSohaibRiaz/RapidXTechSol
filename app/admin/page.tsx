@@ -21,6 +21,8 @@ import {
   Briefcase,
   MessageSquare,
   Star,
+  User,
+  UserX,
 } from "lucide-react"
 import { useThemeContext } from "@/context/theme-context"
 import { AdminAuth } from "@/components/admin-auth"
@@ -212,6 +214,7 @@ function AdminDashboardComponent() {
     review_text: "",
     rating: 5,
     project_category: "",
+    testimonial_type: "identified",
     is_featured: false,
     is_published: false,
   })
@@ -284,8 +287,8 @@ function AdminDashboardComponent() {
 
   const filteredTestimonials = testimonials.filter((testimonial) => {
     const matchesSearch =
-      testimonial.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      testimonial.client_company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (testimonial.client_name && testimonial.client_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (testimonial.client_company && testimonial.client_company.toLowerCase().includes(searchTerm.toLowerCase())) ||
       testimonial.review_text.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus =
       filterStatus === "All" ||
@@ -453,6 +456,7 @@ function AdminDashboardComponent() {
       review_text: "",
       rating: 5,
       project_category: "",
+      testimonial_type: "identified",
       is_featured: false,
       is_published: false,
     })
@@ -467,9 +471,17 @@ function AdminDashboardComponent() {
   }
 
   const handleSaveTestimonial = async () => {
-    if (!testimonialFormData.client_name || !testimonialFormData.client_company || !testimonialFormData.review_text) {
-      alert("Please fill in all required fields")
+    // Validate based on testimonial type
+    if (!testimonialFormData.review_text) {
+      alert("Please fill in the review text")
       return
+    }
+
+    if (testimonialFormData.testimonial_type === "identified") {
+      if (!testimonialFormData.client_name || !testimonialFormData.client_company) {
+        alert("Please fill in client name and company for identified testimonials")
+        return
+      }
     }
 
     try {
@@ -516,50 +528,6 @@ function AdminDashboardComponent() {
       console.error("Error toggling testimonial featured status:", error)
       alert("Error updating testimonial featured status. Please try again.")
     }
-  }
-
-  // Array helpers for projects
-  const addProjectArrayItem = (field: "results" | "features") => {
-    setProjectFormData((prev) => ({
-      ...prev,
-      [field]: [...(prev[field] || []), ""],
-    }))
-  }
-
-  const updateProjectArrayItem = (field: "results" | "features", index: number, value: string) => {
-    setProjectFormData((prev) => ({
-      ...prev,
-      [field]: (prev[field] || []).map((item, i) => (i === index ? value : item)),
-    }))
-  }
-
-  const removeProjectArrayItem = (field: "results" | "features", index: number) => {
-    setProjectFormData((prev) => ({
-      ...prev,
-      [field]: (prev[field] || []).filter((_, i) => i !== index),
-    }))
-  }
-
-  const addProjectImage = () => {
-    const newId = Math.max(...(projectFormData.images?.map((img) => img.id) || [0])) + 1
-    setProjectFormData((prev) => ({
-      ...prev,
-      images: [...(prev.images || []), { id: newId, url: "", alt: "", caption: "" }],
-    }))
-  }
-
-  const updateProjectImage = (index: number, field: keyof ProjectDetail["images"][0], value: string) => {
-    setProjectFormData((prev) => ({
-      ...prev,
-      images: (prev.images || []).map((img, i) => (i === index ? { ...img, [field]: value } : img)),
-    }))
-  }
-
-  const removeProjectImage = (index: number) => {
-    setProjectFormData((prev) => ({
-      ...prev,
-      images: (prev.images || []).filter((_, i) => i !== index),
-    }))
   }
 
   if (isLoading) {
@@ -1005,17 +973,31 @@ function AdminDashboardComponent() {
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <img
-                        src={testimonial.client_image || "/placeholder.svg?height=50&width=50&text=Client"}
-                        alt={testimonial.client_name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div>
-                        <h3 className="font-semibold theme-text theme-transition">{testimonial.client_name}</h3>
-                        <p className="text-sm theme-text opacity-70 theme-transition">
-                          {testimonial.client_position} at {testimonial.client_company}
-                        </p>
-                      </div>
+                      {testimonial.testimonial_type === "identified" && testimonial.client_name ? (
+                        <>
+                          <img
+                            src={testimonial.client_image || "/placeholder.svg?height=50&width=50&text=Client"}
+                            alt={testimonial.client_name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                          <div>
+                            <h3 className="font-semibold theme-text theme-transition">{testimonial.client_name}</h3>
+                            <p className="text-sm theme-text opacity-70 theme-transition">
+                              {testimonial.client_position} at {testimonial.client_company}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
+                            <UserX className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold theme-text theme-transition">Anonymous Client</h3>
+                            <p className="text-sm theme-text opacity-70 theme-transition">Verified Review</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col items-end space-y-1">
                       <span
@@ -1030,6 +1012,25 @@ function AdminDashboardComponent() {
                           Featured
                         </span>
                       )}
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          testimonial.testimonial_type === "identified"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                            : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                        }`}
+                      >
+                        {testimonial.testimonial_type === "identified" ? (
+                          <>
+                            <User className="w-3 h-3 inline mr-1" />
+                            Identified
+                          </>
+                        ) : (
+                          <>
+                            <UserX className="w-3 h-3 inline mr-1" />
+                            Anonymous
+                          </>
+                        )}
+                      </span>
                     </div>
                   </div>
 
@@ -1136,50 +1137,109 @@ function AdminDashboardComponent() {
               </div>
 
               <div className="space-y-6">
-                {/* Client Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Client Name *</label>
-                    <Input
-                      value={testimonialFormData.client_name || ""}
-                      onChange={(e) => setTestimonialFormData((prev) => ({ ...prev, client_name: e.target.value }))}
-                      placeholder="John Doe"
-                      className="theme-text bg-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Position *</label>
-                    <Input
-                      value={testimonialFormData.client_position || ""}
-                      onChange={(e) => setTestimonialFormData((prev) => ({ ...prev, client_position: e.target.value }))}
-                      placeholder="CEO"
-                      className="theme-text bg-transparent"
-                    />
+                {/* Testimonial Type */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">
+                    Testimonial Type *
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="testimonial_type"
+                        value="identified"
+                        checked={testimonialFormData.testimonial_type === "identified"}
+                        onChange={(e) =>
+                          setTestimonialFormData((prev) => ({
+                            ...prev,
+                            testimonial_type: e.target.value as "identified" | "anonymous",
+                          }))
+                        }
+                        className="text-primary"
+                      />
+                      <span className="text-sm theme-text theme-transition flex items-center">
+                        <User className="w-4 h-4 mr-1" />
+                        Identified (with client details)
+                      </span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="testimonial_type"
+                        value="anonymous"
+                        checked={testimonialFormData.testimonial_type === "anonymous"}
+                        onChange={(e) =>
+                          setTestimonialFormData((prev) => ({
+                            ...prev,
+                            testimonial_type: e.target.value as "identified" | "anonymous",
+                          }))
+                        }
+                        className="text-primary"
+                      />
+                      <span className="text-sm theme-text theme-transition flex items-center">
+                        <UserX className="w-4 h-4 mr-1" />
+                        Anonymous (text and stars only)
+                      </span>
+                    </label>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Company *</label>
-                    <Input
-                      value={testimonialFormData.client_company || ""}
-                      onChange={(e) => setTestimonialFormData((prev) => ({ ...prev, client_company: e.target.value }))}
-                      placeholder="Company Name"
-                      className="theme-text bg-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">
-                      Client Image URL
-                    </label>
-                    <Input
-                      value={testimonialFormData.client_image || ""}
-                      onChange={(e) => setTestimonialFormData((prev) => ({ ...prev, client_image: e.target.value }))}
-                      placeholder="https://images.unsplash.com/photo-..."
-                      className="theme-text bg-transparent"
-                    />
-                  </div>
-                </div>
+                {/* Client Info - Only show for identified testimonials */}
+                {testimonialFormData.testimonial_type === "identified" && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium theme-text mb-2 theme-transition">
+                          Client Name *
+                        </label>
+                        <Input
+                          value={testimonialFormData.client_name || ""}
+                          onChange={(e) => setTestimonialFormData((prev) => ({ ...prev, client_name: e.target.value }))}
+                          placeholder="John Doe"
+                          className="theme-text bg-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium theme-text mb-2 theme-transition">Position *</label>
+                        <Input
+                          value={testimonialFormData.client_position || ""}
+                          onChange={(e) =>
+                            setTestimonialFormData((prev) => ({ ...prev, client_position: e.target.value }))
+                          }
+                          placeholder="CEO"
+                          className="theme-text bg-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium theme-text mb-2 theme-transition">Company *</label>
+                        <Input
+                          value={testimonialFormData.client_company || ""}
+                          onChange={(e) =>
+                            setTestimonialFormData((prev) => ({ ...prev, client_company: e.target.value }))
+                          }
+                          placeholder="Company Name"
+                          className="theme-text bg-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium theme-text mb-2 theme-transition">
+                          Client Image URL
+                        </label>
+                        <Input
+                          value={testimonialFormData.client_image || ""}
+                          onChange={(e) =>
+                            setTestimonialFormData((prev) => ({ ...prev, client_image: e.target.value }))
+                          }
+                          placeholder="https://images.unsplash.com/photo-..."
+                          className="theme-text bg-transparent"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Review Content */}
                 <div>
@@ -1274,267 +1334,6 @@ function AdminDashboardComponent() {
                   {editingTestimonial ? "Update Testimonial" : "Create Testimonial"}
                 </Button>
                 <Button variant="outline" onClick={resetTestimonialForm} className="flex-1 bg-transparent">
-                  Cancel
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Project Form Modal - Simplified for brevity */}
-      <AnimatePresence>
-        {isProjectFormOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
-            onClick={() => resetProjectForm()}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto theme-transition`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold theme-text theme-transition">
-                  {editingProject ? "Edit Project" : "Add New Project"}
-                </h2>
-                <Button variant="ghost" onClick={resetProjectForm}>
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Title *</label>
-                    <Input
-                      value={projectFormData.title || ""}
-                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, title: e.target.value }))}
-                      placeholder="Project title"
-                      className="theme-text bg-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Category *</label>
-                    <select
-                      value={projectFormData.category || ""}
-                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, category: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-md border ${
-                        mode === "dark" || color === "black"
-                          ? "border-gray-600 bg-gray-800/50"
-                          : "border-gray-300 bg-white/50"
-                      } theme-text theme-transition`}
-                    >
-                      <option value="">Select category</option>
-                      {categories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">
-                    Short Description *
-                  </label>
-                  <Textarea
-                    value={projectFormData.description || ""}
-                    onChange={(e) => setProjectFormData((prev) => ({ ...prev, description: e.target.value }))}
-                    placeholder="Brief project description"
-                    className="theme-text bg-transparent"
-                    rows={3}
-                  />
-                </div>
-
-                {/* Technologies */}
-                <div>
-                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Technologies</label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {projectFormData.technology?.map((tech, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm flex items-center"
-                      >
-                        {tech}
-                        <button
-                          onClick={() =>
-                            setProjectFormData((prev) => ({
-                              ...prev,
-                              technology: prev.technology?.filter((_, i) => i !== index) || [],
-                            }))
-                          }
-                          className="ml-2 text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <select
-                    onChange={(e) => {
-                      if (e.target.value && !projectFormData.technology?.includes(e.target.value)) {
-                        setProjectFormData((prev) => ({
-                          ...prev,
-                          technology: [...(prev.technology || []), e.target.value],
-                        }))
-                      }
-                      e.target.value = ""
-                    }}
-                    className={`w-full px-3 py-2 rounded-md border ${
-                      mode === "dark" || color === "black"
-                        ? "border-gray-600 bg-gray-800/50"
-                        : "border-gray-300 bg-white/50"
-                    } theme-text theme-transition`}
-                  >
-                    <option value="">Add technology</option>
-                    {technologies.map((tech) => (
-                      <option key={tech} value={tech}>
-                        {tech}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Publish Status */}
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isPublished"
-                    checked={projectFormData.is_published || false}
-                    onChange={(e) => setProjectFormData((prev) => ({ ...prev, is_published: e.target.checked }))}
-                    className="rounded"
-                  />
-                  <label htmlFor="isPublished" className="text-sm font-medium theme-text theme-transition">
-                    Publish immediately
-                  </label>
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex gap-4 mt-8 pt-6 border-t border-gray-300 dark:border-gray-600">
-                <Button onClick={handleSaveProject} className="bg-primary hover:bg-primary/90 text-white flex-1">
-                  <Save className="w-4 h-4 mr-2" />
-                  {editingProject ? "Update Project" : "Create Project"}
-                </Button>
-                <Button variant="outline" onClick={resetProjectForm} className="flex-1 bg-transparent">
-                  Cancel
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Blog Form Modal - Simplified for brevity */}
-      <AnimatePresence>
-        {isBlogFormOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
-            onClick={() => resetBlogForm()}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto theme-transition`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold theme-text theme-transition">
-                  {editingBlogPost ? "Edit Blog Post" : "Add New Blog Post"}
-                </h2>
-                <Button variant="ghost" onClick={resetBlogForm}>
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Title *</label>
-                    <Input
-                      value={blogFormData.title || ""}
-                      onChange={(e) => {
-                        setBlogFormData((prev) => ({
-                          ...prev,
-                          title: e.target.value,
-                          slug: slugify(e.target.value),
-                        }))
-                      }}
-                      placeholder="Blog post title"
-                      className="theme-text bg-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Slug</label>
-                    <Input
-                      value={blogFormData.slug || ""}
-                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                      placeholder="url-slug"
-                      className="theme-text bg-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* Excerpt */}
-                <div>
-                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Excerpt *</label>
-                  <Textarea
-                    value={blogFormData.excerpt || ""}
-                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
-                    placeholder="Brief description of the blog post"
-                    className="theme-text bg-transparent"
-                    rows={3}
-                  />
-                </div>
-
-                {/* Content */}
-                <div>
-                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Content *</label>
-                  <Textarea
-                    value={blogFormData.content || ""}
-                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, content: e.target.value }))}
-                    placeholder="Blog post content (HTML supported)"
-                    className="theme-text bg-transparent"
-                    rows={10}
-                  />
-                </div>
-
-                {/* Publish Status */}
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isBlogPublished"
-                    checked={blogFormData.is_published || false}
-                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, is_published: e.target.checked }))}
-                    className="rounded"
-                  />
-                  <label htmlFor="isBlogPublished" className="text-sm font-medium theme-text theme-transition">
-                    Publish immediately
-                  </label>
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex gap-4 mt-8 pt-6 border-t border-gray-300 dark:border-gray-600">
-                <Button onClick={handleSaveBlogPost} className="bg-primary hover:bg-primary/90 text-white flex-1">
-                  <Save className="w-4 h-4 mr-2" />
-                  {editingBlogPost ? "Update Post" : "Create Post"}
-                </Button>
-                <Button variant="outline" onClick={resetBlogForm} className="flex-1 bg-transparent">
                   Cancel
                 </Button>
               </div>
