@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 
 const ADMIN_PIN = "2024"
+const ADMIN_PASSWORD = "rapidx2024admin"
 const SESSION_KEY = "admin_session"
 const FAILED_ATTEMPTS_KEY = "admin_failed_attempts"
 const LOCKOUT_KEY = "admin_lockout"
@@ -81,6 +82,12 @@ export function useAdminAuth() {
           localStorage.removeItem(SESSION_KEY)
         }
       }
+
+      // Check if user is already authenticated
+      const authStatus = localStorage.getItem("admin_authenticated")
+      if (authStatus === "true") {
+        setIsAuthenticated(true)
+      }
     } catch (error) {
       console.error("Error checking auth status:", error)
       localStorage.removeItem(SESSION_KEY)
@@ -118,8 +125,18 @@ export function useAdminAuth() {
     }
   }
 
+  const login = (password: string): boolean => {
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true)
+      localStorage.setItem("admin_authenticated", "true")
+      return true
+    }
+    return false
+  }
+
   const logout = () => {
     localStorage.removeItem(SESSION_KEY)
+    localStorage.removeItem("admin_authenticated")
     setIsAuthenticated(false)
   }
 
@@ -137,6 +154,7 @@ export function useAdminAuth() {
     isAuthenticated,
     isLoading,
     authenticate,
+    login,
     logout,
     failedAttempts,
     isLockedOut,
