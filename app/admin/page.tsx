@@ -29,7 +29,7 @@ import { AdminAuth } from "@/components/admin-auth"
 import { AdminLayout } from "@/components/admin-layout"
 import { useAdminAuth } from "@/lib/auth"
 import { useSupabaseCMS } from "@/lib/supabase-cms"
-import type { ProjectDetail, BlogPost, ClientReview } from "@/lib/supabase"
+import type { ProjectDetail, BlogPost, ClientReview, ProjectImage } from "@/lib/supabase"
 import { slugify } from "@/lib/utils"
 
 // Categories and technologies
@@ -528,6 +528,49 @@ function AdminDashboardComponent() {
       console.error("Error toggling testimonial featured status:", error)
       alert("Error updating testimonial featured status. Please try again.")
     }
+  }
+
+  const addArrayItem = (field: "results" | "features") => {
+    setProjectFormData((prev) => ({
+      ...prev,
+      [field]: [...(prev[field] || []), ""],
+    }))
+  }
+
+  const updateArrayItem = (field: "results" | "features", index: number, value: string) => {
+    setProjectFormData((prev) => ({
+      ...prev,
+      [field]: (prev[field] || []).map((item, i) => (i === index ? value : item)),
+    }))
+  }
+
+  const removeArrayItem = (field: "results" | "features", index: number) => {
+    setProjectFormData((prev) => ({
+      ...prev,
+      [field]: (prev[field] || []).filter((_, i) => i !== index),
+    }))
+  }
+
+  const addImage = () => {
+    const newId = Math.max(...(projectFormData.images?.map((img) => img.id) || [0])) + 1
+    setProjectFormData((prev) => ({
+      ...prev,
+      images: [...(prev.images || []), { id: newId, url: "", alt: "", caption: "" }],
+    }))
+  }
+
+  const updateImage = (index: number, field: keyof ProjectImage, value: string) => {
+    setProjectFormData((prev) => ({
+      ...prev,
+      images: (prev.images || []).map((img, i) => (i === index ? { ...img, [field]: value } : img)),
+    }))
+  }
+
+  const removeImage = (index: number) => {
+    setProjectFormData((prev) => ({
+      ...prev,
+      images: (prev.images || []).filter((_, i) => i !== index),
+    }))
   }
 
   if (isLoading) {
@@ -1334,6 +1377,476 @@ function AdminDashboardComponent() {
                   {editingTestimonial ? "Update Testimonial" : "Create Testimonial"}
                 </Button>
                 <Button variant="outline" onClick={resetTestimonialForm} className="flex-1 bg-transparent">
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Project Form Modal */}
+      <AnimatePresence>
+        {isProjectFormOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => resetProjectForm()}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto theme-transition`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold theme-text theme-transition">
+                  {editingProject ? "Edit Project" : "Add New Project"}
+                </h2>
+                <Button variant="ghost" onClick={resetProjectForm}>
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Title *</label>
+                    <Input
+                      value={projectFormData.title || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="Project title"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Category *</label>
+                    <select
+                      value={projectFormData.category || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, category: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-md border ${
+                        mode === "dark" || color === "black"
+                          ? "border-gray-600 bg-gray-800/50"
+                          : "border-gray-300 bg-white/50"
+                      } theme-text theme-transition`}
+                    >
+                      <option value="">Select category</option>
+                      {categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Technology Stack */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Technology Stack</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto p-2 border rounded-md">
+                    {technologies.map((tech) => (
+                      <label key={tech} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={projectFormData.technology?.includes(tech) || false}
+                          onChange={(e) => {
+                            const currentTech = projectFormData.technology || []
+                            if (e.target.checked) {
+                              setProjectFormData((prev) => ({
+                                ...prev,
+                                technology: [...currentTech, tech],
+                              }))
+                            } else {
+                              setProjectFormData((prev) => ({
+                                ...prev,
+                                technology: currentTech.filter((t) => t !== tech),
+                              }))
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm theme-text theme-transition">{tech}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">
+                    Short Description *
+                  </label>
+                  <Textarea
+                    value={projectFormData.description || ""}
+                    onChange={(e) => setProjectFormData((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="Brief project description"
+                    className="theme-text bg-transparent"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Long Description */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Long Description</label>
+                  <Textarea
+                    value={projectFormData.long_description || ""}
+                    onChange={(e) => setProjectFormData((prev) => ({ ...prev, long_description: e.target.value }))}
+                    placeholder="Detailed project description"
+                    className="theme-text bg-transparent"
+                    rows={5}
+                  />
+                </div>
+
+                {/* Challenge & Solution */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Challenge</label>
+                    <Textarea
+                      value={projectFormData.challenge || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, challenge: e.target.value }))}
+                      placeholder="What challenges did you face?"
+                      className="theme-text bg-transparent"
+                      rows={4}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Solution</label>
+                    <Textarea
+                      value={projectFormData.solution || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, solution: e.target.value }))}
+                      placeholder="How did you solve them?"
+                      className="theme-text bg-transparent"
+                      rows={4}
+                    />
+                  </div>
+                </div>
+
+                {/* Project Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Duration</label>
+                    <Input
+                      value={projectFormData.duration || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, duration: e.target.value }))}
+                      placeholder="e.g., 3 months"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Team Size</label>
+                    <Input
+                      type="number"
+                      value={projectFormData.team_size || 1}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, team_size: Number(e.target.value) }))}
+                      min="1"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Client Type</label>
+                    <Input
+                      value={projectFormData.client_type || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, client_type: e.target.value }))}
+                      placeholder="e.g., Startup, Enterprise"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* URLs */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Live URL</label>
+                    <Input
+                      value={projectFormData.live_url || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, live_url: e.target.value }))}
+                      placeholder="https://example.com"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">GitHub URL</label>
+                    <Input
+                      value={projectFormData.github_url || ""}
+                      onChange={(e) => setProjectFormData((prev) => ({ ...prev, github_url: e.target.value }))}
+                      placeholder="https://github.com/..."
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Images */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Project Images</label>
+                  <div className="space-y-3">
+                    {projectFormData.images?.map((image, index) => (
+                      <div key={image.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-md">
+                        <Input
+                          placeholder="Image URL"
+                          value={image.url}
+                          onChange={(e) => updateImage(index, "url", e.target.value)}
+                          className="theme-text bg-transparent"
+                        />
+                        <Input
+                          placeholder="Alt text"
+                          value={image.alt}
+                          onChange={(e) => updateImage(index, "alt", e.target.value)}
+                          className="theme-text bg-transparent"
+                        />
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Caption (optional)"
+                            value={image.caption || ""}
+                            onChange={(e) => updateImage(index, "caption", e.target.value)}
+                            className="theme-text bg-transparent flex-1"
+                          />
+                          {projectFormData.images && projectFormData.images.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeImage(index)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" onClick={addImage} className="w-full bg-transparent">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Image
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Publish Status */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isPublished"
+                    checked={projectFormData.is_published || false}
+                    onChange={(e) => setProjectFormData((prev) => ({ ...prev, is_published: e.target.checked }))}
+                    className="rounded"
+                  />
+                  <label htmlFor="isPublished" className="text-sm font-medium theme-text theme-transition">
+                    Publish immediately
+                  </label>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-4 mt-8 pt-6 border-t border-gray-300 dark:border-gray-600">
+                <Button onClick={handleSaveProject} className="bg-primary hover:bg-primary/90 text-white flex-1">
+                  <Save className="w-4 h-4 mr-2" />
+                  {editingProject ? "Update Project" : "Create Project"}
+                </Button>
+                <Button variant="outline" onClick={resetProjectForm} className="flex-1 bg-transparent">
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Blog Form Modal */}
+      <AnimatePresence>
+        {isBlogFormOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => resetBlogForm()}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto theme-transition`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold theme-text theme-transition">
+                  {editingBlogPost ? "Edit Blog Post" : "Add New Blog Post"}
+                </h2>
+                <Button variant="ghost" onClick={resetBlogForm}>
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Title *</label>
+                    <Input
+                      value={blogFormData.title || ""}
+                      onChange={(e) => {
+                        setBlogFormData((prev) => ({
+                          ...prev,
+                          title: e.target.value,
+                          slug: slugify(e.target.value),
+                        }))
+                      }}
+                      placeholder="Blog post title"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Slug</label>
+                    <Input
+                      value={blogFormData.slug || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, slug: e.target.value }))}
+                      placeholder="blog-post-slug"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Author and Date */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Author</label>
+                    <Input
+                      value={blogFormData.author || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, author: e.target.value }))}
+                      placeholder="Author name"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">Date</label>
+                    <Input
+                      type="date"
+                      value={blogFormData.date || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, date: e.target.value }))}
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Featured Image */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">
+                    Featured Image URL
+                  </label>
+                  <Input
+                    value={blogFormData.image || ""}
+                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, image: e.target.value }))}
+                    placeholder="https://images.unsplash.com/photo-..."
+                    className="theme-text bg-transparent"
+                  />
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Tags</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto p-2 border rounded-md">
+                    {blogTags.map((tag) => (
+                      <label key={tag} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={blogFormData.tags?.includes(tag) || false}
+                          onChange={(e) => {
+                            const currentTags = blogFormData.tags || []
+                            if (e.target.checked) {
+                              setBlogFormData((prev) => ({
+                                ...prev,
+                                tags: [...currentTags, tag],
+                              }))
+                            } else {
+                              setBlogFormData((prev) => ({
+                                ...prev,
+                                tags: currentTags.filter((t) => t !== tag),
+                              }))
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm theme-text theme-transition">{tag}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Excerpt */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Excerpt *</label>
+                  <Textarea
+                    value={blogFormData.excerpt || ""}
+                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
+                    placeholder="Brief description of the blog post"
+                    className="theme-text bg-transparent"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Content */}
+                <div>
+                  <label className="block text-sm font-medium theme-text mb-2 theme-transition">Content *</label>
+                  <Textarea
+                    value={blogFormData.content || ""}
+                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, content: e.target.value }))}
+                    placeholder="Full blog post content (Markdown supported)"
+                    className="theme-text bg-transparent"
+                    rows={10}
+                  />
+                </div>
+
+                {/* SEO */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">SEO Title</label>
+                    <Input
+                      value={blogFormData.seo_title || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, seo_title: e.target.value }))}
+                      placeholder="SEO optimized title"
+                      className="theme-text bg-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium theme-text mb-2 theme-transition">
+                      SEO Description
+                    </label>
+                    <Textarea
+                      value={blogFormData.seo_description || ""}
+                      onChange={(e) => setBlogFormData((prev) => ({ ...prev, seo_description: e.target.value }))}
+                      placeholder="SEO meta description"
+                      className="theme-text bg-transparent"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                {/* Publish Status */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isBlogPublished"
+                    checked={blogFormData.is_published || false}
+                    onChange={(e) => setBlogFormData((prev) => ({ ...prev, is_published: e.target.checked }))}
+                    className="rounded"
+                  />
+                  <label htmlFor="isBlogPublished" className="text-sm font-medium theme-text theme-transition">
+                    Publish immediately
+                  </label>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-4 mt-8 pt-6 border-t border-gray-300 dark:border-gray-600">
+                <Button onClick={handleSaveBlogPost} className="bg-primary hover:bg-primary/90 text-white flex-1">
+                  <Save className="w-4 h-4 mr-2" />
+                  {editingBlogPost ? "Update Blog Post" : "Create Blog Post"}
+                </Button>
+                <Button variant="outline" onClick={resetBlogForm} className="flex-1 bg-transparent">
                   Cancel
                 </Button>
               </div>
