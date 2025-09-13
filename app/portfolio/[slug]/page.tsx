@@ -7,7 +7,8 @@ import { ArrowLeft, ExternalLink, Github, Calendar, Users, Building, MessageCirc
 import { Button } from "@/components/ui/button"
 import { ImageCarousel } from "@/components/image-carousel"
 import { useThemeContext } from "@/context/theme-context"
-import { usePortfolioCMS, type ProjectDetail } from "@/lib/cms-data"
+import { PortfolioCMS } from "@/lib/supabase-cms"
+import type { ProjectDetail } from "@/lib/supabase"
 import { notFound } from "next/navigation"
 
 interface ProjectDetailPageProps {
@@ -15,20 +16,30 @@ interface ProjectDetailPageProps {
 }
 
 export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-  const { getProjectBySlug, isLoading } = usePortfolioCMS()
   const [project, setProject] = useState<ProjectDetail | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const { mode, color } = useThemeContext()
 
   useEffect(() => {
-    if (!isLoading) {
-      const foundProject = getProjectBySlug(params.slug)
-      if (foundProject) {
-        setProject(foundProject)
+    loadProject()
+  }, [params.slug])
+
+  const loadProject = async () => {
+    try {
+      setIsLoading(true)
+      const data = await PortfolioCMS.getProjectBySlug(params.slug)
+      if (data) {
+        setProject(data)
       } else {
         notFound()
       }
+    } catch (error) {
+      console.error("Error loading project:", error)
+      notFound()
+    } finally {
+      setIsLoading(false)
     }
-  }, [params.slug, getProjectBySlug, isLoading])
+  }
 
   if (isLoading) {
     return (
@@ -147,7 +158,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
             {project.title}
           </h1>
           <p className={`text-xl ${getSecondaryTextClass()} max-w-3xl theme-transition leading-relaxed`}>
-            {project.longDescription}
+            {project.long_description || project.description}
           </p>
         </motion.div>
 
@@ -274,7 +285,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               </div>
             </motion.section>
 
-            {/* CLIENT TESTIMONIAL SECTION COMPLETELY REMOVED */}
+            {/* NO TESTIMONIAL SECTION - COMPLETELY REMOVED */}
           </div>
 
           {/* Sidebar */}
@@ -299,24 +310,24 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                     </div>
                   </div>
                 )}
-                {project.teamSize && (
+                {project.team_size && (
                   <div className="flex items-center space-x-3">
                     <Users className="w-5 h-5 text-primary" />
                     <div>
                       <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Team Size</div>
                       <div className={`font-semibold ${getTextClass()} theme-transition text-lg`}>
-                        {project.teamSize} members
+                        {project.team_size} members
                       </div>
                     </div>
                   </div>
                 )}
-                {hasContent(project.clientType) && (
+                {hasContent(project.client_type) && (
                   <div className="flex items-center space-x-3">
                     <Building className="w-5 h-5 text-primary" />
                     <div>
                       <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Client Type</div>
                       <div className={`font-semibold ${getTextClass()} theme-transition text-lg`}>
-                        {project.clientType}
+                        {project.client_type}
                       </div>
                     </div>
                   </div>
@@ -331,23 +342,23 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="space-y-3"
             >
-              {hasContent(project.liveUrl) && (
+              {hasContent(project.live_url) && (
                 <Button
                   asChild
                   className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                  <a href={project.live_url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     View Live Project
                   </a>
                 </Button>
               )}
-              {hasContent(project.githubUrl) && (
+              {hasContent(project.github_url) && (
                 <Button
                   asChild
-                  className={`w-full bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
+                  className="w-full bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                  <a href={project.github_url} target="_blank" rel="noopener noreferrer">
                     <Github className="w-4 h-4 mr-2" />
                     View Source Code
                   </a>
@@ -355,7 +366,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               )}
               <Button
                 asChild
-                className={`w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <Link href="/contact">
                   <MessageCircle className="w-4 h-4 mr-2" />
