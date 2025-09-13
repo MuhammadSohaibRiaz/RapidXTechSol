@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { ArrowLeft, ExternalLink, Github, Calendar, Users, Building, Star, MessageCircle } from "lucide-react"
+import { ArrowLeft, ExternalLink, Github, Calendar, Users, Building, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ImageCarousel } from "@/components/image-carousel"
 import { useThemeContext } from "@/context/theme-context"
@@ -35,7 +35,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       <div className="min-h-screen theme-bg theme-transition flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="theme-text theme-transition">Loading project details...</p>
+          <p className="text-white">Loading project details...</p>
         </div>
       </div>
     )
@@ -47,15 +47,15 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
   const getCardBgClass = () => {
     if (mode === "dark" || color === "black") {
-      return "bg-gray-800/80 border border-gray-700/50"
+      return "bg-gray-900/90 border border-gray-700/50"
     } else {
-      return "bg-white/90 border border-gray-200/50"
+      return "bg-white/95 border border-gray-200/50"
     }
   }
 
   const getTextClass = () => {
     if (mode === "dark" || color === "black") {
-      return "text-gray-100"
+      return "text-white"
     } else {
       return "text-gray-900"
     }
@@ -63,18 +63,30 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
   const getSecondaryTextClass = () => {
     if (mode === "dark" || color === "black") {
+      return "text-gray-200"
+    } else {
+      return "text-gray-700"
+    }
+  }
+
+  const getMutedTextClass = () => {
+    if (mode === "dark" || color === "black") {
       return "text-gray-300"
     } else {
       return "text-gray-600"
     }
   }
 
-  const getMutedTextClass = () => {
-    if (mode === "dark" || color === "black") {
-      return "text-gray-400"
-    } else {
-      return "text-gray-500"
+  // Helper function to check if content exists and is not empty
+  const hasContent = (content: any): boolean => {
+    if (!content) return false
+    if (Array.isArray(content)) {
+      return content.length > 0 && content.some((item) => item && item.trim && item.trim() !== "")
     }
+    if (typeof content === "string") {
+      return content.trim() !== ""
+    }
+    return true
   }
 
   return (
@@ -82,7 +94,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
         <motion.div
-          className="absolute inset-0 theme-glow blur-3xl theme-transition opacity-30"
+          className="absolute inset-0 theme-glow blur-3xl theme-transition opacity-20"
           animate={{
             x: ["0%", "100%", "0%"],
             y: ["0%", "50%", "0%"],
@@ -104,7 +116,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
           className="mb-8"
         >
           <Link href="/portfolio">
-            <Button variant="ghost" className={`${getTextClass()} hover:bg-primary/10 theme-transition`}>
+            <Button variant="ghost" className={`${getTextClass()} hover:bg-primary/20 theme-transition`}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Portfolio
             </Button>
@@ -119,11 +131,14 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
           className="mb-12"
         >
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
+            <span className="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium shadow-lg">
               {project.category}
             </span>
             {project.technology.slice(0, 3).map((tech) => (
-              <span key={tech} className="px-3 py-1 bg-secondary/20 text-secondary rounded-full text-sm">
+              <span
+                key={tech}
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-medium shadow-lg"
+              >
                 {tech}
               </span>
             ))}
@@ -131,7 +146,9 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
           <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent theme-gradient-text theme-transition mb-4">
             {project.title}
           </h1>
-          <p className={`text-xl ${getSecondaryTextClass()} max-w-3xl theme-transition`}>{project.longDescription}</p>
+          <p className={`text-xl ${getSecondaryTextClass()} max-w-3xl theme-transition leading-relaxed`}>
+            {project.longDescription}
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -146,27 +163,27 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               <ImageCarousel images={project.images} projectTitle={project.title} />
             </motion.div>
 
-            {/* Project Overview */}
-            {(project.challenge || project.solution) && (
+            {/* Project Overview - Only show if challenge or solution exists */}
+            {(hasContent(project.challenge) || hasContent(project.solution)) && (
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
+                className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-xl theme-transition`}
               >
                 <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Project Overview</h2>
                 <div className="space-y-6">
-                  {project.challenge && (
+                  {hasContent(project.challenge) && (
                     <div>
-                      <h3 className={`text-lg font-semibold ${getTextClass()} mb-2 theme-transition`}>Challenge</h3>
+                      <h3 className={`text-lg font-semibold ${getTextClass()} mb-3 theme-transition`}>Challenge</h3>
                       <p className={`${getSecondaryTextClass()} theme-transition leading-relaxed`}>
                         {project.challenge}
                       </p>
                     </div>
                   )}
-                  {project.solution && (
+                  {hasContent(project.solution) && (
                     <div>
-                      <h3 className={`text-lg font-semibold ${getTextClass()} mb-2 theme-transition`}>Solution</h3>
+                      <h3 className={`text-lg font-semibold ${getTextClass()} mb-3 theme-transition`}>Solution</h3>
                       <p className={`${getSecondaryTextClass()} theme-transition leading-relaxed`}>
                         {project.solution}
                       </p>
@@ -176,18 +193,18 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               </motion.section>
             )}
 
-            {/* Key Features */}
-            {project.features && project.features.length > 0 && project.features[0] && (
+            {/* Key Features - Only show if features exist and are not empty */}
+            {hasContent(project.features) && (
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
+                className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-xl theme-transition`}
               >
                 <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Key Features</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {project.features
-                    .filter((feature) => feature.trim())
+                    .filter((feature) => feature && feature.trim() !== "")
                     .map((feature, index) => (
                       <motion.div
                         key={index}
@@ -204,28 +221,28 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               </motion.section>
             )}
 
-            {/* Results */}
-            {project.results && project.results.length > 0 && project.results[0] && (
+            {/* Results - Only show if results exist and are not empty */}
+            {hasContent(project.results) && (
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
+                className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-xl theme-transition`}
               >
                 <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Results & Impact</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {project.results
-                    .filter((result) => result.trim())
+                    .filter((result) => result && result.trim() !== "")
                     .map((result, index) => (
                       <motion.div
                         key={index}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
-                        className="text-center p-4 rounded-lg bg-primary/10 border border-primary/20"
+                        className="text-center p-6 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30 shadow-lg"
                       >
-                        <div className="text-2xl font-bold text-primary mb-2">{result.match(/\d+%?/)?.[0] || "✓"}</div>
-                        <p className={`${getSecondaryTextClass()} text-sm theme-transition`}>
+                        <div className="text-3xl font-bold text-primary mb-2">{result.match(/\d+%?/)?.[0] || "✓"}</div>
+                        <p className={`${getSecondaryTextClass()} text-sm theme-transition font-medium`}>
                           {result.replace(/\d+%?\s*/, "")}
                         </p>
                       </motion.div>
@@ -239,7 +256,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-xl theme-transition`}
             >
               <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Technology Stack</h2>
               <div className="flex flex-wrap gap-3">
@@ -249,7 +266,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: 0.6 + index * 0.1 }}
-                    className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-full text-sm font-medium shadow-lg"
+                    className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-shadow"
                   >
                     {tech}
                   </motion.span>
@@ -257,40 +274,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               </div>
             </motion.section>
 
-            {/* Client Testimonial - This is embedded in the project data */}
-            {project.testimonial && project.testimonial.quote && (
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-                className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-8 shadow-lg theme-transition`}
-              >
-                <h2 className={`text-2xl font-bold ${getTextClass()} mb-6 theme-transition`}>Client Feedback</h2>
-                <div className="space-y-4">
-                  <div className="flex mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <blockquote className={`text-lg ${getTextClass()} italic mb-4 theme-transition`}>
-                    "{project.testimonial.quote}"
-                  </blockquote>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold">{project.testimonial.author.charAt(0)}</span>
-                    </div>
-                    <div>
-                      <div className={`font-semibold ${getTextClass()} theme-transition`}>
-                        {project.testimonial.author}
-                      </div>
-                      <div className={`text-sm ${getMutedTextClass()} theme-transition`}>
-                        {project.testimonial.position} at {project.testimonial.company}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.section>
-            )}
+            {/* CLIENT TESTIMONIAL SECTION COMPLETELY REMOVED */}
           </div>
 
           {/* Sidebar */}
@@ -300,31 +284,43 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 shadow-lg theme-transition`}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 shadow-xl theme-transition`}
             >
               <h3 className={`text-xl font-bold ${getTextClass()} mb-4 theme-transition`}>Project Details</h3>
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <Calendar className="w-5 h-5 text-primary" />
-                  <div>
-                    <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Duration</div>
-                    <div className={`font-medium ${getTextClass()} theme-transition`}>{project.duration}</div>
+                {hasContent(project.duration) && (
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    <div>
+                      <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Duration</div>
+                      <div className={`font-semibold ${getTextClass()} theme-transition text-lg`}>
+                        {project.duration}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Users className="w-5 h-5 text-primary" />
-                  <div>
-                    <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Team Size</div>
-                    <div className={`font-medium ${getTextClass()} theme-transition`}>{project.teamSize} members</div>
+                )}
+                {project.teamSize && (
+                  <div className="flex items-center space-x-3">
+                    <Users className="w-5 h-5 text-primary" />
+                    <div>
+                      <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Team Size</div>
+                      <div className={`font-semibold ${getTextClass()} theme-transition text-lg`}>
+                        {project.teamSize} members
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Building className="w-5 h-5 text-primary" />
-                  <div>
-                    <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Client Type</div>
-                    <div className={`font-medium ${getTextClass()} theme-transition`}>{project.clientType}</div>
+                )}
+                {hasContent(project.clientType) && (
+                  <div className="flex items-center space-x-3">
+                    <Building className="w-5 h-5 text-primary" />
+                    <div>
+                      <div className={`text-sm ${getMutedTextClass()} theme-transition`}>Client Type</div>
+                      <div className={`font-semibold ${getTextClass()} theme-transition text-lg`}>
+                        {project.clientType}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </motion.div>
 
@@ -335,19 +331,21 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="space-y-3"
             >
-              {project.liveUrl && (
-                <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white">
+              {hasContent(project.liveUrl) && (
+                <Button
+                  asChild
+                  className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                >
                   <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     View Live Project
                   </a>
                 </Button>
               )}
-              {project.githubUrl && (
+              {hasContent(project.githubUrl) && (
                 <Button
                   asChild
-                  variant="outline"
-                  className={`w-full ${getCardBgClass()} ${getTextClass()} border-primary/20 hover:bg-primary/10`}
+                  className={`w-full bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
                 >
                   <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
                     <Github className="w-4 h-4 mr-2" />
@@ -357,8 +355,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               )}
               <Button
                 asChild
-                variant="outline"
-                className={`w-full ${getCardBgClass()} ${getTextClass()} border-primary/20 hover:bg-primary/10`}
+                className={`w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
               >
                 <Link href="/contact">
                   <MessageCircle className="w-4 h-4 mr-2" />
@@ -372,16 +369,19 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 shadow-lg theme-transition`}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 shadow-xl theme-transition`}
             >
               <h3 className={`text-xl font-bold ${getTextClass()} mb-4 theme-transition`}>
                 Ready to Start Your Project?
               </h3>
-              <p className={`text-sm ${getMutedTextClass()} mb-4 theme-transition`}>
+              <p className={`text-sm ${getMutedTextClass()} mb-4 theme-transition leading-relaxed`}>
                 Let's discuss how we can help bring your unique vision to life with our expertise and dedication to
                 excellence.
               </p>
-              <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white">
+              <Button
+                asChild
+                className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
                 <Link href="/contact">Get a Free Consultation</Link>
               </Button>
             </motion.div>

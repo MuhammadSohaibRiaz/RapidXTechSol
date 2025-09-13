@@ -2,10 +2,10 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { LogOut, Clock, Shield } from "lucide-react"
+import { LogOut, Clock, AlertTriangle, Shield, RefreshCw } from "lucide-react"
 import { useThemeContext } from "@/context/theme-context"
 import { useAdminAuth } from "@/lib/auth"
 
@@ -13,69 +13,142 @@ interface AdminLayoutProps {
   children: React.ReactNode
 }
 
+const SESSION_DURATION = 30 * 60 * 1000 // 30 minutes
+const WARNING_TIME = 5 * 60 * 1000 // 5 minutes before expiry
+
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { mode, color } = useThemeContext()
-  const { logout, sessionTimeRemaining, formatSessionTime, extendSession } = useAdminAuth()
+  const { logout } = useAdminAuth()
+  const [sessionEnd, setSessionEnd] = useState<number | null>(null)
+  const [timeRemaining, setTimeRemaining] = useState(0)
+  const [showWarning, setShowWarning] = useState(false)
   const [showExtendDialog, setShowExtendDialog] = useState(false)
 
-  // Show extend session dialog when 5 minutes remaining
   useEffect(() => {
-    if (sessionTimeRemaining > 0 && sessionTimeRemaining <= 5 * 60 * 1000 && !showExtendDialog) {
-      setShowExtendDialog(true)
-    }
-  }, [sessionTimeRemaining, showExtendDialog])
-
-  const getCardBgClass = () => {
-    if (mode === "dark" || color === "black") {
-      return "bg-gray-900/40"
+    // Initialize or restore session
+    const storedSession = localStorage.getItem("admin_session_end")
+    if (storedSession) {
+      const sessionEndTime = Number.parseInt(storedSession)
+      if (Date.now() < sessionEndTime) {
+        setSessionEnd(sessionEndTime)
+      } else {
+        // Session expired
+        logout()
+        return
+      }
     } else {
-      return "bg-white/40"
+      // New session
+      const newSessionEnd = Date.now() + SESSION_DURATION
+      setSessionEnd(newSessionEnd)
+      localStorage.setItem("admin_session_end", newSessionEnd.toString())
     }
+  }, [logout])
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+
+    if (sessionEnd) {
+      interval = setInterval(() => {
+        const remaining = Math.max(0, sessionEnd - Date.now())
+        setTimeRemaining(remaining)
+
+        if (remaining === 0) {
+          logout()
+        } else if (remaining <= WARNING_TIME && !showWarning) {
+          setShowWarning(true)
+          setShowExtendDialog(true)
+        }
+      }, 1000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [sessionEnd, showWarning, logout])
+
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000)
+    const seconds = Math.floor((ms % 60000) / 1000)
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`
+  }
+
+  const extendSession = () => {
+    const newSessionEnd = Date.now() + SESSION_DURATION
+    setSessionEnd(newSessionEnd)
+    localStorage.setItem("admin_session_end", newSessionEnd.toString())
+    setShowWarning(false)
+    setShowExtendDialog(false)
   }
 
   const handleLogout = () => {
-    if (confirm("Are you sure you want to logout?")) {
-      logout()
-      window.location.reload()
+    localStorage.removeItem("admin_session_end")
+    logout()
+  }
+
+  const getCardBgClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "bg-gray-900/90 border border-gray-700/50"
+    } else {
+      return "bg-white/95 border border-gray-200/50"
     }
   }
 
-  const handleExtendSession = () => {
-    extendSession()
-    setShowExtendDialog(false)
+  const getTextClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "text-white"
+    } else {
+      return "text-gray-900"
+    }
+  }
+
+  const getSecondaryTextClass = () => {
+    if (mode === "dark" || color === "black") {
+      return "text-gray-300"
+    } else {
+      return "text-gray-600"
+    }
   }
 
   return (
     <div className="min-h-screen theme-bg theme-transition">
       {/* Admin Header */}
-      <header
-        className={`${getCardBgClass()} backdrop-blur-md border-b border-gray-300 dark:border-gray-600 theme-transition sticky top-0 z-40`}
-      >
+      <div className={`${getCardBgClass()} backdrop-blur-md border-b shadow-lg theme-transition sticky top-0 z-40`}>
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
                 <Shield className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold theme-text theme-transition">Admin Panel</h1>
-                <p className="text-xs theme-text opacity-60 theme-transition">Content Management System</p>
+                <h1 className={`text-lg font-bold ${getTextClass()} theme-transition`}>Admin Panel</h1>
+                <p className={`text-xs ${getSecondaryTextClass()} theme-transition`}>RapidXTech CMS</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
               {/* Session Timer */}
-              <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="text-sm font-mono text-primary">{formatSessionTime(sessionTimeRemaining)}</span>
+              <div className="flex items-center space-x-2">
+                <Clock className={`w-4 h-4 ${timeRemaining <= WARNING_TIME ? "text-orange-500" : "text-primary"}`} />
+                <span className={`text-sm font-mono ${getTextClass()} theme-transition`}>
+                  {formatTime(timeRemaining)}
+                </span>
               </div>
+
+              {/* Session Warning Indicator */}
+              {showWarning && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"
+                />
+              )}
 
               {/* Logout Button */}
               <Button
+                onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                onClick={handleLogout}
-                className="bg-transparent theme-text border-gray-300 dark:border-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:border-red-700 dark:hover:text-red-400"
+                className={`${getTextClass()} border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50`}
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -83,61 +156,60 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="relative">{children}</main>
+      <div className="relative">{children}</div>
 
       {/* Session Extension Dialog */}
-      {showExtendDialog && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-        >
+      <AnimatePresence>
+        {showExtendDialog && (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 w-full max-w-md shadow-2xl theme-transition`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           >
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-6 h-6 text-white" />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${getCardBgClass()} backdrop-blur-md rounded-lg p-6 w-full max-w-md shadow-2xl theme-transition`}
+            >
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-8 h-8 text-orange-500" />
+                </div>
+                <h2 className={`text-xl font-bold ${getTextClass()} mb-2 theme-transition`}>Session Expiring Soon</h2>
+                <p className={`${getSecondaryTextClass()} theme-transition`}>
+                  Your admin session will expire in {formatTime(timeRemaining)}
+                </p>
               </div>
-              <h2 className="text-xl font-bold theme-text theme-transition mb-2">Session Expiring Soon</h2>
-              <p className="theme-text opacity-70 theme-transition">
-                Your session will expire in {formatSessionTime(sessionTimeRemaining)}. Would you like to extend it?
-              </p>
-            </div>
 
-            <div className="flex gap-3">
-              <Button onClick={handleExtendSession} className="flex-1 bg-primary hover:bg-primary/90 text-white">
-                Extend Session
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowExtendDialog(false)}
-                className="flex-1 bg-transparent theme-text border-gray-300 dark:border-gray-600"
-              >
-                Continue
-              </Button>
-            </div>
+              <div className="flex gap-3">
+                <Button onClick={extendSession} className="flex-1 bg-primary hover:bg-primary/90 text-white">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Extend Session
+                </Button>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  className="flex-1 border-red-500/30 text-red-500 hover:bg-red-500/10 bg-transparent"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+
+              <div className="mt-4 text-center">
+                <p className={`text-xs ${getSecondaryTextClass()} theme-transition`}>
+                  Session will be extended by 30 minutes
+                </p>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-
-      {/* Footer */}
-      <footer
-        className={`${getCardBgClass()} backdrop-blur-md border-t border-gray-300 dark:border-gray-600 theme-transition mt-12`}
-      >
-        <div className="container mx-auto px-6 py-4">
-          <div className="text-center">
-            <p className="text-sm theme-text opacity-60 theme-transition">
-              © 2024 RapidXTech Admin Panel • Secure Content Management
-            </p>
-          </div>
-        </div>
-      </footer>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
