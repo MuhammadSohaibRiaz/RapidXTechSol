@@ -80,7 +80,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <StatsSection />
+      
 
       <FloatingCards />
 

@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { useRouter } from "next/navigation"
-import { ExternalLink, Github, Calendar, Users, Filter, Search } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ExternalLink, Github, Calendar, Users, Filter, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useThemeContext } from "@/context/theme-context"
@@ -15,13 +14,13 @@ const categories = ["All", "Web Development", "App Development", "UI/UX Design",
 
 export default function PortfolioClient() {
   const { mode, color } = useThemeContext()
-  const router = useRouter()
   const [projects, setProjects] = useState<ProjectDetail[]>([])
   const [filteredProjects, setFilteredProjects] = useState<ProjectDetail[]>([])
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedProject, setSelectedProject] = useState<ProjectDetail | null>(null)
 
   // Load projects from Supabase
   useEffect(() => {
@@ -67,33 +66,17 @@ export default function PortfolioClient() {
 
   const getCardBgClass = () => {
     if (mode === "dark" || color === "black") {
-      return "bg-gray-900/80 border border-gray-700/50"
+      return "bg-gray-900/40"
     } else {
-      return "bg-white/90 border border-gray-200/50"
+      return "bg-white/40"
     }
   }
 
-  const getTextClass = () => {
+  const getModalBgClass = () => {
     if (mode === "dark" || color === "black") {
-      return "text-white"
+      return "bg-gray-900/95"
     } else {
-      return "text-gray-900"
-    }
-  }
-
-  const getSecondaryTextClass = () => {
-    if (mode === "dark" || color === "black") {
-      return "text-gray-200"
-    } else {
-      return "text-gray-700"
-    }
-  }
-
-  const getMutedTextClass = () => {
-    if (mode === "dark" || color === "black") {
-      return "text-gray-400"
-    } else {
-      return "text-gray-600"
+      return "bg-white/95"
     }
   }
 
@@ -134,8 +117,8 @@ export default function PortfolioClient() {
       <div className="min-h-screen theme-bg theme-transition relative overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
         <div className="text-center relative z-10">
-          <h1 className={`text-4xl font-bold ${getTextClass()} mb-4`}>Portfolio</h1>
-          <p className={`text-xl ${getSecondaryTextClass()} mb-8`}>
+          <h1 className="text-4xl font-bold theme-text mb-4">Portfolio</h1>
+          <p className="text-xl theme-text opacity-70 mb-8">
             Unable to load projects at the moment. Please try again later.
           </p>
           <Button onClick={loadProjects} className="bg-primary hover:bg-primary/90 text-white">
@@ -150,7 +133,7 @@ export default function PortfolioClient() {
     <div className="min-h-screen theme-bg theme-transition relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
       <motion.div
-        className="absolute inset-0 theme-glow blur-3xl theme-transition opacity-20"
+        className="absolute inset-0 theme-glow blur-3xl theme-transition"
         animate={{
           x: ["0%", "100%", "0%"],
           y: ["0%", "50%", "0%"],
@@ -173,7 +156,7 @@ export default function PortfolioClient() {
           <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent theme-gradient-text theme-transition mb-6">
             Our Portfolio
           </h1>
-          <p className={`text-xl ${getSecondaryTextClass()} max-w-3xl mx-auto theme-transition`}>
+          <p className="text-xl theme-text opacity-80 max-w-3xl mx-auto theme-transition">
             Explore our collection of successful projects that showcase our expertise in web development, mobile apps,
             and digital solutions.
           </p>
@@ -189,12 +172,12 @@ export default function PortfolioClient() {
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${getMutedTextClass()}`} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 theme-text opacity-50" />
               <Input
                 placeholder="Search projects..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={`pl-10 ${getTextClass()} bg-transparent border-gray-300 dark:border-gray-600`}
+                className="pl-10 theme-text bg-transparent border-gray-300 dark:border-gray-600"
               />
             </div>
 
@@ -209,7 +192,7 @@ export default function PortfolioClient() {
                   className={`${
                     selectedCategory === category
                       ? "bg-primary text-white"
-                      : `bg-transparent ${getTextClass()} border-gray-300 dark:border-gray-600 hover:bg-primary/10`
+                      : "bg-transparent theme-text border-gray-300 dark:border-gray-600 hover:bg-primary/10"
                   } theme-transition`}
                 >
                   <Filter className="w-3 h-3 mr-1" />
@@ -220,7 +203,7 @@ export default function PortfolioClient() {
           </div>
 
           {/* Results count */}
-          <div className={`mt-4 text-sm ${getMutedTextClass()} theme-transition`}>
+          <div className="mt-4 text-sm theme-text opacity-70 theme-transition">
             Showing {filteredProjects.length} of {projects.length} projects
           </div>
         </motion.div>
@@ -240,7 +223,7 @@ export default function PortfolioClient() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className={`${getCardBgClass()} backdrop-blur-md rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 theme-transition group cursor-pointer`}
-                onClick={() => router.push(`/portfolio/${project.slug}`)}
+                onClick={() => setSelectedProject(project)}
                 whileHover={{ y: -5 }}
               >
                 <div className="relative h-64 overflow-hidden">
@@ -260,32 +243,25 @@ export default function PortfolioClient() {
                 </div>
 
                 <div className="p-6">
-                  <h3 className={`text-xl font-bold ${getTextClass()} mb-2 theme-transition group-hover:text-primary`}>
+                  <h3 className="text-xl font-bold theme-text mb-2 theme-transition group-hover:text-primary">
                     {project.title}
                   </h3>
-                  <p className={`${getSecondaryTextClass()} mb-4 line-clamp-2 theme-transition`}>
-                    {project.description}
-                  </p>
+                  <p className="theme-text opacity-70 mb-4 line-clamp-2 theme-transition">{project.description}</p>
 
                   <div className="flex flex-wrap gap-2 mb-4">
                     {project.technology.slice(0, 3).map((tech, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-xs font-medium"
-                      >
+                      <span key={i} className="px-2 py-1 bg-secondary/20 theme-text rounded text-xs theme-transition">
                         {tech}
                       </span>
                     ))}
                     {project.technology.length > 3 && (
-                      <span className="px-3 py-1 bg-gradient-to-r from-gray-500 to-gray-700 text-white rounded-full text-xs font-medium">
+                      <span className="px-2 py-1 bg-secondary/20 theme-text rounded text-xs theme-transition">
                         +{project.technology.length - 3} more
                       </span>
                     )}
                   </div>
 
-                  <div
-                    className={`flex items-center justify-between text-sm ${getMutedTextClass()} mb-4 theme-transition`}
-                  >
+                  <div className="flex items-center justify-between text-sm theme-text opacity-60 mb-4 theme-transition">
                     <span className="flex items-center">
                       <Calendar className="w-3 h-3 mr-1" />
                       {project.duration}
@@ -300,7 +276,8 @@ export default function PortfolioClient() {
                     {project.live_url && (
                       <Button
                         size="sm"
-                        className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold"
+                        variant="outline"
+                        className="flex-1 bg-transparent theme-text border-gray-300 dark:border-gray-600 hover:bg-primary/10"
                         onClick={(e) => {
                           e.stopPropagation()
                           window.open(project.live_url!, "_blank")
@@ -313,7 +290,8 @@ export default function PortfolioClient() {
                     {project.github_url && (
                       <Button
                         size="sm"
-                        className="flex-1 bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-semibold"
+                        variant="outline"
+                        className="flex-1 bg-transparent theme-text border-gray-300 dark:border-gray-600 hover:bg-primary/10"
                         onClick={(e) => {
                           e.stopPropagation()
                           window.open(project.github_url!, "_blank")
@@ -336,8 +314,8 @@ export default function PortfolioClient() {
             className="text-center py-16"
           >
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className={`text-2xl font-bold ${getTextClass()} mb-2 theme-transition`}>No projects found</h3>
-            <p className={`${getSecondaryTextClass()} theme-transition`}>
+            <h3 className="text-2xl font-bold theme-text mb-2 theme-transition">No projects found</h3>
+            <p className="theme-text opacity-70 theme-transition">
               Try adjusting your search terms or category filters.
             </p>
             <Button
@@ -352,6 +330,176 @@ export default function PortfolioClient() {
           </motion.div>
         )}
       </div>
+
+      {/* Project Detail Modal */}
+      <AnimatePresence>
+        {selectedProject && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => setSelectedProject(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${getModalBgClass()} backdrop-blur-md rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto theme-transition`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedProject(null)}
+                  className="absolute top-4 right-4 z-10 bg-black/20 hover:bg-black/40 text-white"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+
+                <div className="relative h-80 overflow-hidden rounded-t-lg">
+                  <OptimizedImage
+                    src={selectedProject.images[0]?.url || "/placeholder.svg?height=400&width=800&text=Project+Image"}
+                    alt={selectedProject.images[0]?.alt || selectedProject.title}
+                    width={800}
+                    height={400}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-medium mb-4 inline-block">
+                      {selectedProject.category}
+                    </span>
+                    <h2 className="text-3xl font-bold text-white mb-2">{selectedProject.title}</h2>
+                    <p className="text-white/90">{selectedProject.description}</p>
+                  </div>
+                </div>
+
+                <div className="p-8">
+                  {selectedProject.long_description && (
+                    <div className="mb-8">
+                      <h3 className="text-xl font-bold theme-text mb-4 theme-transition">About This Project</h3>
+                      <p className="theme-text opacity-80 leading-relaxed theme-transition">
+                        {selectedProject.long_description}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    {selectedProject.challenge && (
+                      <div>
+                        <h3 className="text-lg font-bold theme-text mb-3 theme-transition">Challenge</h3>
+                        <p className="theme-text opacity-80 theme-transition">{selectedProject.challenge}</p>
+                      </div>
+                    )}
+
+                    {selectedProject.solution && (
+                      <div>
+                        <h3 className="text-lg font-bold theme-text mb-3 theme-transition">Solution</h3>
+                        <p className="theme-text opacity-80 theme-transition">{selectedProject.solution}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedProject.features && selectedProject.features.length > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-bold theme-text mb-4 theme-transition">Key Features</h3>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {selectedProject.features.map((feature, i) => (
+                          <li key={i} className="flex items-center theme-text opacity-80 theme-transition">
+                            <span className="w-2 h-2 bg-primary rounded-full mr-3 flex-shrink-0" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedProject.results && selectedProject.results.length > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-bold theme-text mb-4 theme-transition">Results</h3>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {selectedProject.results.map((result, i) => (
+                          <li key={i} className="flex items-center theme-text opacity-80 theme-transition">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0" />
+                            {result}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="mb-8">
+                    <h3 className="text-lg font-bold theme-text mb-4 theme-transition">Technologies Used</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProject.technology.map((tech, i) => (
+                        <span key={i} className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-primary">{selectedProject.duration}</div>
+                      <div className="text-sm theme-text opacity-70 theme-transition">Duration</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-primary">{selectedProject.team_size}</div>
+                      <div className="text-sm theme-text opacity-70 theme-transition">Team Size</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-primary">{selectedProject.category}</div>
+                      <div className="text-sm theme-text opacity-70 theme-transition">Category</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-primary">{selectedProject.client_type || "N/A"}</div>
+                      <div className="text-sm theme-text opacity-70 theme-transition">Client Type</div>
+                    </div>
+                  </div>
+
+                  {selectedProject.testimonial && (
+                    <div className="mb-8 p-6 bg-primary/10 rounded-lg">
+                      <h3 className="text-lg font-bold theme-text mb-4 theme-transition">Client Testimonial</h3>
+                      <blockquote className="text-lg theme-text opacity-90 mb-4 italic theme-transition">
+                        "{selectedProject.testimonial.quote}"
+                      </blockquote>
+                      <div className="theme-text opacity-70 theme-transition">
+                        — {selectedProject.testimonial.author}, {selectedProject.testimonial.position} at{" "}
+                        {selectedProject.testimonial.company}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-4">
+                    {selectedProject.live_url && (
+                      <Button
+                        className="flex-1 bg-primary hover:bg-primary/90 text-white"
+                        onClick={() => window.open(selectedProject.live_url!, "_blank")}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        View Live Project
+                      </Button>
+                    )}
+                    {selectedProject.github_url && (
+                      <Button
+                        variant="outline"
+                        className="flex-1 bg-transparent theme-text border-gray-300 dark:border-gray-600 hover:bg-primary/10"
+                        onClick={() => window.open(selectedProject.github_url!, "_blank")}
+                      >
+                        <Github className="w-4 h-4 mr-2" />
+                        View Source Code
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
