@@ -191,21 +191,21 @@ export default function Footer() {
                   href="mailto:info@rapidxtech.com"
                   className={`${getTextClass()} hover:text-primary theme-transition`}
                 >
-                  info@rapidxtech.com
+                  sohaibriaz201@gmail.com
                 </a>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-primary" />
                 <a href="tel:+1234567890" className={`${getTextClass()} hover:text-primary theme-transition`}>
-                  +1 (234) 567-8900
+                  +92 (325) 484-8523
                 </a>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-primary mt-1" />
                 <span className={`${getTextClass()} theme-transition`}>
-                  123 Tech Street
+                  Y Block, Main Street
                   <br />
-                  Innovation City, IC 12345
+                  Sheikhupura City, 39350
                 </span>
               </div>
             </div>
