@@ -86,9 +86,9 @@ export default function Home() {
 
       <ScrollSection />
 
-      <TestimonialsSection />
+      
 
-      <CompanyCarousel />
+     
 
       <section className="py-32 theme-bg relative theme-transition">
         <div className="container mx-auto px-4 text-center relative z-10">
