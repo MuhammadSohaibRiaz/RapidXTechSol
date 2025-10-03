@@ -80,13 +80,15 @@ export default function Home() {
         </motion.div>
       </section>
 
-      
+      <StatsSection />
+
+      <CompanyCarousel />
 
       <FloatingCards />
 
       <ScrollSection />
 
-      
+      <TestimonialsSection/>
 
      
 
